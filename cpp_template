@@ -11,7 +11,7 @@ using namespace std;
 #define vb vector<bool>
 #define vs vector<string>
 #define pb push_back
-#define pb push_front
+#define pf push_front
 
 #define pii pair<int,int>
 #define vip vector<pair<int,int>>
@@ -29,10 +29,10 @@ using namespace std;
 
 #define all(v) v.begin(), v.end()
 #define asc(v) sort(v.begin(), v.end())
-#define dsc(v) sort(v.rbegin(), v.rend())
-
+#define rev(v) sort(v.rbegin(), v.rend())
 #define ign cin.ignore()
 #define getln(s) getline(cin, s)
+
 #define fli(n) for(int i=0; i<n; i++)
 #define rfli(n) for(int i=n-1; i>=0; i--)
 #define flj(n) for(int j=0; j<n; j++)
@@ -48,7 +48,6 @@ using namespace std;
 #define no cout<<"NO\n"
 #define endl "\n"
 int k;
-
 
 /*= = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
