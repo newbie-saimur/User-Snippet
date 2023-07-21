@@ -1,8 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-#define ll    long long
-#define ull   unsigned long long
+#define ll      long long
+#define ull     unsigned long long
 
 #define umap    unordered_map
 #define uset    unordered_set
@@ -15,11 +15,11 @@ using namespace std;
 #define ub      upper_bound
 #define lb      lower_bound
 
-#define all(v)      v.begin(), v.end()
-#define asc(v)      sort(v.begin(), v.end())
-#define rev(v)      sort(v.rbegin(), v.rend())
-#define ign         cin.ignore()
-#define getln(s)    getline(cin, s)
+#define all(v)       v.begin(), v.end()
+#define asc(v)       sort(v.begin(), v.end())
+#define rev(v)       sort(v.rbegin(), v.rend())
+#define ign          cin.ignore()
+#define getln(s)     getline(cin, s)
 
 #define eps          (double)(1e-7)
 #define pi           (double)(acos(-1))
@@ -35,7 +35,7 @@ using namespace std;
 #define case     cout<<"Case "<<k<<": "
 #define yes      cout<<"YES\n";
 #define no       cout<<"NO\n";
-#define endl      "\n"
+#define endl     "\n"
 int k;
 
 /*= = = = = = = = = = = = = = = = = = = = = = = = = = = = 
