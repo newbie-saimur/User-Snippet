@@ -1,5 +1,8 @@
 #include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
 using namespace std;
+using namespace __gnu_pbds;
 
 #define ll      long long
 #define ull     unsigned long long
@@ -7,7 +10,6 @@ using namespace std;
 #define umap    unordered_map
 #define uset    unordered_set
 #define pb      push_back
-#define pop     pop_back()
 #define pf      push_front
 #define ff      first
 #define ss      second
@@ -16,9 +18,6 @@ using namespace std;
 #define lb      lower_bound
 
 #define all(v)       v.begin(), v.end()
-#define asc(v)       sort(v.begin(), v.end())
-#define rev(v)       sort(v.rbegin(), v.rend())
-
 #define eps          (double)(1e-7)
 #define pi           (double)(acos(-1))
 #define gcd(a, b)    __gcd(a, b)
@@ -30,52 +29,22 @@ using namespace std;
 #define min4(a,b,c,d)   min(a,min(b,min(c,d)))
 #define max4(a,b,c,d)   max(a,max(b,max(c,d)))
 
-#define case     cout<<"Case "<<k<<": "
+#define case     cout<<"Case "<<_<<": "
 #define yes      cout<<"YES\n"
 #define no       cout<<"NO\n"
 #define endl     "\n"
-int k;
+int _;
+
+template<class T> using o_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>; 
+template<class T> using o_mset = tree<T, null_type, less_equal<T>, rb_tree_tag, tree_order_statistics_node_update>; 
+// s.order_of_key(x) = number of elements strictly less than x
+// *s.find_by_order(i) = ith element in set (0 index)
 
 /*= = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
                     Code Start From Here                    
 
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = */
-
-const int N = 1e7 + 10;
-vector<bool> isPrime(N,1);
-vector<int> lowestPrime(N), highestPrime(N);
-
-void seive()
-{
-    isPrime[0] = isPrime[1] = false;
-    for(int i=2; i<N; i++)
-    {
-        if(isPrime[i])
-        {
-            lowestPrime[i] = highestPrime[i] = i;
-            for(int j = 2 * i; j<N; j+=i)
-            {
-                isPrime[j] = false;
-                highestPrime[j] = i;
-                if(lowestPrime[j]==0)
-                    lowestPrime[j] = i;
-            }
-        }
-    }
-}
-
-int binExp(int a, int b, int M)
-{
-    int res = 1;
-    while(b)
-    {
-        if(b&1) res = (res * 1LL * a) % M;
-        a = (a * 1LL * a) % M;
-        b >>= 1;
-    }
-    return res;
-}
 
 void solve()
 {
@@ -87,7 +56,7 @@ int main() {
     
     ll test=1;
     //cin>>test;
-    for(k=1; k<=test; k++)
+    for(_=1; _<=test; _++)
     {
         solve();
     }
