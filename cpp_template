@@ -46,6 +46,41 @@ template<class T> using o_mset = tree<T, null_type, less_equal<T>, rb_tree_tag, 
 
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = */
 
+const int N = 1e7 + 10;
+vector<bool> isPrime(N,1);
+vector<int> lowestPrime(N), highestPrime(N);
+
+void seive()
+{
+    isPrime[0] = isPrime[1] = false;
+    for(int i=2; i<N; i++)
+    {
+        if(isPrime[i])
+        {
+            lowestPrime[i] = highestPrime[i] = i;
+            for(int j = 2 * i; j<N; j+=i)
+            {
+                isPrime[j] = false;
+                highestPrime[j] = i;
+                if(lowestPrime[j]==0)
+                    lowestPrime[j] = i;
+            }
+        }
+    }
+}
+
+int binExp(int a, int b, int M)
+{
+    int res = 1;
+    while(b)
+    {
+        if(b&1) res = (res * 1LL * a) % M;
+        a = (a * 1LL * a) % M;
+        b >>= 1;
+    }
+    return res;
+}
+
 void solve()
 {
     
