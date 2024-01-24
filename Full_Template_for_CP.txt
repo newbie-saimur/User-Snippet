@@ -242,7 +242,7 @@ void divisorSeive(){
 
 // Large Number MOD
 
-bool largeNumberMod(string number,int M)
+bool largeNumberMod(string number,int M)   // largeNumberMod("12345",10);
 {
     int now = number[0] - '0';
     for(int i = 1; i < number.length(); i++) {
@@ -258,7 +258,7 @@ bool largeNumberMod(string number,int M)
 
 // Two Large Number Multiplication
 
-string toString(int num)    // largeNumberMod("12345",10);
+string toString(int num)    
 {
     if(num == 0) return "0";
     string s = "";
