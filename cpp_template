@@ -1,97 +1,22 @@
 #include <bits/stdc++.h>
-// #include <ext/pb_ds/assoc_container.hpp>
-// #include <ext/pb_ds/tree_policy.hpp>
-// #include <ext/pb_ds/detail/standard_policies.hpp>
 using namespace std;
-// using namespace __gnu_pbds;
-
-#define debug(x) cerr << #x<<" : "; cerr<<x<<" "; cerr << endl;
-#define int     long long
-#define ff      first
-#define ss      second
-#define all(v)      v.begin(), v.end()
-#define pi          (double)(acos(-1))
-#define gcd(a,b)    __gcd(a, b)
-#define lcm(a,b)    (a * b) / __gcd(a, b)
-#define mod         (int)(1e9+7)
-
-#define setbit(n)      __builtin_popcountll(n)  // Count of set bit
-#define zerobit(n)     __builtin_ctzll(n)       // Count of 0 bit before 1st 1
-#define getbit(n,i)    ((n & (1LL << i)) != 0)  // nth bit ?
-#define clearlsb(n,i)  (n & (~((1<<(i+1))-1)))  // unset upto ith bit rtl
-#define clearmsb(n,i)  (n & ((1<<(i+1))-1))     // unset before ith bit ltr
-#define setbit0(n,i)   (n & (~(1LL << i)))      // unset any bit
-#define setbit1(n,i)   (n | (1LL << i))         // set any bit
-#define togglebit(n,i) (n ^ (1LL << i))
-
-#define min3(a,b,c)     min(a,min(b,c))
-#define max3(a,b,c)     max(a,max(b,c))
-#define min4(a,b,c,d)   min(a,min(b,min(c,d)))
-#define max4(a,b,c,d)   max(a,max(b,max(c,d)))
-
 #define case     cout<<"Case "<<_<<": "
-#define sp(x,y)  fixed<<setprecision(y)<<x
-#define endl     "\n"
+#define int      long long
 int _;
-
-// template<class T> using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>; 
-// template<class T> using ordered_mset = tree<T, null_type, less_equal<T>, rb_tree_tag, tree_order_statistics_node_update>; 
-// s.order_of_key(x) = number of elements strictly less than x
-// *s.find_by_order(i) = ith element in set (0 index)
-
-int binExp(int a,int b,int M){int res=1;while(b){if(b&1) res=(res*1LL*a)%M;a=(a*1LL*a)%M;b>>=1;}return res;}
-
-// sort pair by 2nd value => sorta -> ascending & sortd-> decending
-bool sorta(const pair<int,int> &a,const pair<int,int> &b){return (a.second < b.second);}
-bool sortd(const pair<int,int> &a,const pair<int,int> &b){return (a.second > b.second);}
-// Implementation : sort(all(v),sorta); Here, v is vector of pairs
-
-// Check
-bool isPowerOfTwo(int n){return !(n & (n-1));}
-bool isPerfectSquare(int x){if (x >= 0) {int sr = sqrt(x);return (sr * sr == x);}return false;}
-
-/*= = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-
-                    Code Start From Here                    
-
-= = = = = = = = = = = = = = = = = = = = = = = = = = = = */
-
-const int N = 1e7 + 10;
-vector<bool> isPrime(N,1);
-vector<int> lowestPrime(N), highestPrime(N);
-
-void seive()
-{
-    isPrime[0] = isPrime[1] = false;
-    for(int i=2; i<N; i++)
-    {
-        if(isPrime[i])
-        {
-            lowestPrime[i] = highestPrime[i] = i;
-            for(int j = 2 * i; j<N; j+=i)
-            {
-                isPrime[j] = false;
-                highestPrime[j] = i;
-                if(lowestPrime[j]==0)
-                    lowestPrime[j] = i;
-            }
-        }
-    }
-}
 
 void solve()
 {
-    
+
 }
 
 int32_t main() {
-    ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
-    
-    int test=1;
+    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+
+    int test = 1;
     //cin>>test;
-    for(_=1; _<=test; _++)
+    for (_ = 1; _ <= test; _++)
     {
         solve();
     }
     return 0;
-}  
+}
