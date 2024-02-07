@@ -1,0 +1,21 @@
+<snippet>
+	<content><![CDATA[
+int NOD(int n) {
+    int nod = 1;
+    for (int i = 2; i * i <= n; ++i) {
+        int pow = 0;
+        while (n % i == 0) {
+            pow++;
+            n /= i;
+        }
+        nod *= (pow + 1);
+    }
+    if (n > 1) nod *= 2;
+    return nod;
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>nod</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.c++</scope>
+</snippet>

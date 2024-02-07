@@ -1,0 +1,49 @@
+<snippet>
+	<content><![CDATA[
+const int mod = 1e9 + 7;
+const int sz = 2;
+
+struct Mat {
+    int mat[sz][sz];
+    Mat() {
+        memset(mat, 0, sizeof(mat));
+    }
+    void identity() {
+        for (int i = 0; i < sz; i++) {
+            mat[i][i] = 1;
+        }
+    }
+    Mat operator* (Mat a) {
+        Mat res;
+        for (int i = 0; i < sz; i++) {
+            for (int j = 0; j < sz; j++) {
+                for (int k = 0; k < sz; k++) {
+                    res.mat[i][j] += mat[i][k] * a.mat[k][j];
+                    res.mat[i][j] %= mod;
+                }
+            }
+        }
+        return res;
+    }
+};
+
+int Fib(int n) {
+    Mat res;
+    res.identity();
+    Mat T;
+    T.mat[0][0] = T.mat[0][1] = T.mat[1][0] = 1;
+    if (n <= 2) return 1;
+    n -= 2;
+    while (n) {
+        if (n & 1) res = res * T;
+        T = T * T;
+        n /= 2;
+    }
+    return (res.mat[0][0] + res.mat[0][1]) % mod;
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>nth_fib</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.c++</scope>
+</snippet>

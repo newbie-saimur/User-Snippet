@@ -1,0 +1,42 @@
+<snippet>
+	<content><![CDATA[
+const int N = 1e6 + 10;
+vector<bool> isPrime(N, 1);
+vector<int> highestPrime(N);
+
+void seive()
+{
+    isPrime[0] = isPrime[1] = false;
+    for (int i = 2; i < N; i++)
+    {
+        if (isPrime[i])
+        {
+            highestPrime[i] = i;
+            for (int j = 2 * i; j < N; j += i)
+            {
+                isPrime[j] = false;
+                highestPrime[j] = i;
+            }
+        }
+    }
+}
+int phi(int num) {
+    int denominator = 1, numarator = num;
+    while (num > 1)
+    {
+        int divisor = highestPrime[num];
+        denominator = denominator * divisor;
+        numarator = numarator * (divisor - 1);
+        while (num % divisor == 0)
+        {
+            num /= divisor;
+        }
+    }
+    return numarator / denominator;
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>phi_using_seive</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.c++</scope>
+</snippet>

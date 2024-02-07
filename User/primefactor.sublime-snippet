@@ -1,0 +1,39 @@
+<snippet>
+	<content><![CDATA[
+const int N = 1e7 + 10;
+vector<bool> isPrime(N, 1);
+vector<int> lowestPrime(N);
+
+void seive()
+{
+    isPrime[0] = isPrime[1] = false;
+    for (int i = 2; i < N; i++)
+    {
+        if (isPrime[i])
+        {
+            lowestPrime[i] = i;
+            for (int j = 2 * i; j < N; j += i)
+            {
+                isPrime[j] = false;
+                if (lowestPrime[j] == 0) {
+                    lowestPrime[j] = i;
+                }
+            }
+        }
+    }
+}
+
+map<int,int> prime_factors; // first = prime factors & second = count
+while(num>1){
+    int prime_factor = lowestPrime[num];
+    while(num % prime_factor == 0){
+        num /= prime_factor;
+        prime_factors[prime_factor]++;
+    }
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>primefactor</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.c++</scope>
+</snippet>

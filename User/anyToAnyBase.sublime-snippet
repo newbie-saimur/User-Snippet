@@ -1,0 +1,21 @@
+<snippet>
+	<content><![CDATA[
+int any_to_anybase(int num, int baseA, int baseB) {
+    int ans = 0;
+    int dec =  stoll(to_string(num), nullptr , baseA);
+    int rem = 0;
+    int i = 1;
+    while (dec) {
+        rem = dec % baseB;
+        dec /= baseB;
+        ans += rem * i;
+        i *= 10;
+    }
+    return ans;
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>anybase_to_anybase</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.c++</scope>
+</snippet>
