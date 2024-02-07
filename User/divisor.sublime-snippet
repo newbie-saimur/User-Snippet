@@ -1,0 +1,18 @@
+<snippet>
+	<content><![CDATA[
+
+const int N = 1e5+10;
+vector<int> divisors[N];
+void divisorSeive(){
+    for(int i = 2; i < N; i++){
+        for(int j = i; j < N; j += i){
+            divisors[j].pb(i);
+        }
+    }
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>divisor</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.c++</scope>
+</snippet>
