@@ -1,0 +1,27 @@
+<snippet>
+	<content><![CDATA[
+int MOD = 1e9 + 7;
+int BigMod(int b, int p) {
+    int x = 1;
+    while (p) {
+        if (p & 1) x = (x * b) % MOD;
+        b = (b * b) % MOD;
+        p >>= 1;
+    } return x;
+}
+
+int geometric_Sum() {
+    int a, r, n; cin >> a >> r >> n; //a = first value r = ratio, n = n-term
+    int res = BigMod(r, n);
+    int numerator = (a * (1 - res)) % MOD;
+    numerator = (numerator + MOD) % MOD;
+    int denominator = ((1 - r) % MOD + MOD) % MOD;
+    int ans = (numerator * BigMod(denominator, MOD - 2)) % MOD;
+    return ans;
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>geometricSum</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.c++</scope>
+</snippet>
