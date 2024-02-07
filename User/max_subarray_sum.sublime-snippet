@@ -1,0 +1,17 @@
+<snippet>
+	<content><![CDATA[
+int max_subarray_sum(vector<int> &a) {
+    int max_so_far = -1e9, max_end_here = 0;
+    for (int i = 1; i < a.size(); i++) {
+        max_end_here += a[i];
+        if (max_end_here > max_so_far) max_so_far = max_end_here;
+        if (max_end_here < 0) max_end_here = 0;
+    }
+    return max_so_far;
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>max_subarray_sum</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.c++</scope>
+</snippet>
