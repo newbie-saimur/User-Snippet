@@ -1,36 +1,74 @@
-#include <bits/stdc++.h>
-using namespace std;
-#define case     cout<<"Case "<<_<<": "
-#define int      long long
-int _;
-int32_t main() {
-    ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
-    int test = 1;
-    //cin>>test;
-    for (_ = 1; _ <= test; _++)
-    {
-        solve();
-    }
-    return 0;
+Sublime Build : Windows
+{
+"cmd": ["g++.exe","-std=c++20", "${file}", "-o", "${file_base_name}.exe", "&&" , "${file_base_name}.exe<inputf.in>outputf.in"],
+"selector":"source.cpp",
+"shell":true,
+"working_dir":"$file_path"
 }
 
-=====================  Formula  ======================    
 
-// No of divisors & Sum of divisors
-// P^x * Q^y * R^z 	here, P,Q,R are prime factors & x,y,z powers
-// NOD = (x+1)(y+1)(z+1)
-// SOD = ((P^(x+1)-1)/(P-1)) * ((Q^(y+1)-1)/(Q-1)) * ((R^(z+1)-1)/(R-1))
+Sublime Build : Linux
+{
+"cmd" : ["g++ -std=c++20 $file_name -o $file_base_name && timeout 10s ./$file_base_name<inputf.in>outputf.in"], 
+"selector" : "source.cpp",
+"shell": true,
+"working_dir" : "$file_path"
+}
 
 
-// Modular Arithmatic
-// (a + b) % M = ((a % M) + (b % M)) % M
-// (a * b) % M = ((a % M) * (b % M)) % M
-// (a - b) % M = ((a % M) - (b % M) + M) % M
-// (a / b) % M = a * binExp(b, M - 2, M)  // binExp(b,M-2,M) calculates inverse of b
-	
-===================== Algorithm ======================                   
+Fast Input/Output
+ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
+#pragma GCC optimize("O3,unroll-loops")
+#pragma GCC target("avx2,bmi,bmi2,lzcnt,popcnt")
 
-// Seive
+
+Priority Queue
+priority_queue<int, vector<int>,greater<int>> pq;
+// min value comes first
+
+
+PBDS (Ordered Set)
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+template<class T> using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
+// s.order_of_key(x) = number of elements strictly less than x
+// *s.find_by_order(i) = ith element in set (0 index)
+
+
+GpHashTable
+#include <ext/pb_ds/assoc_container.hpp>
+using namespace __gnu_pbds;
+struct customHash {
+    static uint64_t saimur(uint64_t x) {
+        x += 0x9e3779b97f4a7c15;
+        x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
+        x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
+        return x ^ (x >> 31);
+    }
+    size_t operator()(uint64_t x) const {
+        static const uint64_t FIXED_RANDOM = chrono::steady_clock::now().time_since_epoch().count();
+        return saimur(x + FIXED_RANDOM);
+    }
+};
+gp_hash_table <int, int, customHash> table;
+
+
+Bit Manipulation
+#define setbit(n)      __builtin_popcountll(n)  // Count of set bit
+#define zerobit(n)     __builtin_ctzll(n)       // Count of 0 bit before 1st 1
+#define getbit(n,i)    ((n & (1LL << i)) != 0)  // nth bit ?
+#define clearlsb(n,i)  (n & (~((1<<(i+1))-1)))  // unset upto ith bit rtl
+#define clearmsb(n,i)  (n & ((1<<(i+1))-1))     // unset before ith bit ltr
+#define setbit0(n,i)   (n & (~(1LL << i)))      // unset any bit
+#define setbit1(n,i)   (n | (1LL << i))         // set any bit
+#define togglebit(n,i) (n ^ (1LL << i))
+
+
+=========== Algorithm ============                   
+
+
+Seive
 const int N = 1e7 + 10;
 vector<bool> isPrime(N,1);
 vector<int> lowestPrime(N), highestPrime(N);
@@ -51,7 +89,8 @@ void seive()
     }
 }
 
-// Stored Prime Seive
+
+Stored Prime Seive
 const int N = 1e7 + 10;
 vector<bool> isPrime(N, 1);
 vector<int> prime;
@@ -76,23 +115,31 @@ void seive()
     }
 }
 
-// Phi using Seive
-int phi(int num) {
-    int denominator = 1, numarator = num;
-    while (num > 1)
-    {
-        int divisor = highestPrime[num];
-        denominator = denominator * divisor;
-        numarator = numarator * (divisor - 1);
-        while (num % divisor == 0)
-        {
-            num /= divisor;
+
+Phi Using Seive Variation in Range 1 to N
+void phi_1_to_n(int n) {  //nlogn
+    vector<int> phi(n + 1);
+    phi[0] = 0; phi[1] = 1;
+    for (int i = 2; i <= n; i++)
+        phi[i] = i - 1;
+    for (int i = 2; i <= n; i++)
+        for (int j = 2 * i; j <= n; j += i)
+            phi[j] -= phi[i];
+}
+int phi(int n) { //sqrt(n)
+    int result = n;
+    for (int i = 2; i * i <= n; i++) {
+        if (n % i == 0) {
+            while (n % i == 0) n /= i;
+            result -= result / i;
         }
     }
-    return numarator / denominator;
+    if (n > 1) result -= result / n;
+    return result;
 }
 
-// Phi without sieve
+
+Phi for Single Number
 int phi(int n) {
     int result = n;
     for (int i = 2; i * i <= n; i++) {
@@ -105,7 +152,8 @@ int phi(int n) {
     return result;
 }
 
-// Prime Factorization using Seive
+
+Prime Factorization Using Seive
 map<int,int> prime_factors; // first = prime factors & second = count
 while(num>1){
     int prime_factor = lowestPrime[num];
@@ -115,7 +163,8 @@ while(num>1){
     }
 }
 
-// Divisors
+
+Divisors
 const int N = 1e5+10;
 vector<int> divisors[N];
 void divisorSeive(){
@@ -126,7 +175,10 @@ void divisorSeive(){
     }
 }
 
-// Number of Divisors (NOD)
+
+// P^x * Q^y * R^z  => here, P, Q, R are prime factors & x, y, z are powers
+NOD = (x + 1) (y + 1) (z + 1)
+Number of Divisors (NOD)
 int NOD(int n) {
     int nod = 1;
     for (int i = 2; i * i <= n; ++i) {
@@ -141,7 +193,11 @@ int NOD(int n) {
     return nod;
 }
 
-// Sums of Divisors (SOD)
+
+SOD = ((P^(x+1)-1)/(P-1)) * ((Q^(y+1)-1)/(Q-1)) * ((R^(z+1)-1)/(R-1))
+
+
+Sums of Divisors (SOD)
 int SOD(int n) {
     int sod = 1;
     for (int i = 2; i * i <= n; ++i) {
@@ -159,7 +215,8 @@ int SOD(int n) {
     return sod;
 }
 
-// Base Conversion Any to Any
+
+Base Conversion Any to Any
 int any_to_anybase(int num, int baseA, int baseB) {
     int ans = 0;
     int dec =  stoll(to_string(num), nullptr , baseA);
@@ -174,8 +231,8 @@ int any_to_anybase(int num, int baseA, int baseB) {
     return ans;
 }
 
-// Length of LIS
 
+Length of LIS
 int LIS_Length() {
     ans.push_back(v[0]);
     for (int i = 1; i < n; i++) {
@@ -186,7 +243,101 @@ int LIS_Length() {
     return ans.size();
 }
 
-// Subset Generation using bitmask
+
+Maximum Subarray Sum (Kadane’s Algo)
+int max_subarray_sum(vector<int> &a) {
+    int max_so_far = -1e9, max_end_here = 0;
+    for (int i = 1; i < a.size(); i++) {
+        max_end_here += a[i];
+        if (max_end_here > max_so_far) max_so_far = max_end_here;
+        if (max_end_here < 0) max_end_here = 0;
+    }
+    return max_so_far;
+}
+
+
+Maximum Subarray size thats sum = K
+int n, k; cin >> n >> k;
+    int total_sum = 0;
+    vector < int > pre(n + 7, 0);
+    for (int i = 1; i <= n; i++) {
+        int temp; cin >> temp;
+        total_sum += temp;
+        if (i == 1) pre[i] = temp;
+        else pre[i] = pre[i - 1] + temp;
+    }
+    if (total_sum < k) { cout << "-1" << endl; return; }
+    if (total_sum == k) { cout << "0" << endl; return; }
+    int maximum_subSize = 0;
+    gp_hash_table < int, int, customHash> table;
+    for (int i = 1; i <= n; i++) {
+        if (pre[i] >= k) {
+            int subSUM = pre[i] - k;
+            if (subSUM == 0) maximum_subSize = max(maximum_subSize, i);
+            else if (table[subSUM]) {
+                int left = table[subSUM];
+                int right = i;
+                int subSize = right - left;
+                maximum_subSize = max(subSize, maximum_subSize);
+            }
+        }
+        if (!table[pre[i]]) table[pre[i]] = i;
+    }
+    cout << maximum_subSize << endl;
+
+
+Number of Subarray Sum = K
+int n, k; cin >> n >> k;
+    int total_sum = 0;
+    vector < int > pre(n + 7, 0);
+    for (int i = 1; i <= n; i++) {
+        int temp; cin >> temp;
+        total_sum += temp;
+        if (i == 1) pre[i] = temp;
+        else pre[i] = pre[i - 1] + temp;
+    }
+    int cnt_subarry = 0;
+    gp_hash_table < int, int, customHash> table;
+    table[0] = 1;
+    for (int i = 1; i <= n; i++) {
+        cnt_subarry += table[pre[i] - k];
+        table[pre[i]]++;
+    }
+    cout << cnt_subarry << endl;
+
+
+Geometric Sum
+int MOD = 1e9 + 7;
+int BigMod(int b, int p) {
+    int x = 1;
+    while (p) {
+        if (p & 1) x = (x * b) % MOD;
+        b = (b * b) % MOD;
+        p >>= 1;
+    } return x;
+}
+
+
+int geometric_Sum() {
+    int a, r, n; cin >> a >> r >> n; //a = first value r = ratio, n = n-term
+    int res = BigMod(r, n);
+    int numerator = (a * (1 - res)) % MOD;
+    numerator = (numerator + MOD) % MOD;
+    int denominator = ((1 - r) % MOD + MOD) % MOD;
+    int ans = (numerator * BigMod(denominator, MOD - 2)) % MOD;
+    return ans;
+}
+
+
+GCD LCM Notes
+gcd(a,gcd(b,c))=gcd(gcd(a,b),c)
+gcd(a,b,c)=gcd(gcd(a,b),c)
+gcd(a,b)=gcd(a−b,b)
+lcm(a, gcd(b,c)) = gcd(lcm(a, b), lcm(a, c))
+gcd(a, lcm(b, c)) = lcm(gcd(a, b), gcd(a, c))
+
+
+Subset Generation using bitmask
 vector<vector<int>> subsets(vector<int> &v){
     int n = v.size();
     int subset_cnt = (1<<n);
@@ -199,8 +350,8 @@ vector<vector<int>> subsets(vector<int> &v){
     } return subsets;
 }
 
-// Merge Sort
 
+Merge Sort
 void merge(int l, int r, int mid) {
     int l_sz = mid - l + 1;
     int L[l_sz + 1];
@@ -227,6 +378,7 @@ void merge(int l, int r, int mid) {
     }
 }
 
+
 void mergeSort(int l, int r) {
     if(l == r) return;
     int mid = (l+r)/2;
@@ -235,7 +387,8 @@ void mergeSort(int l, int r) {
     merge(l,r,mid);
 }
 
-// Next Greater Element
+
+Next Greater Element
 vector<int> NGE(vector<int> &v){
     vector<int> nge(v.size());
     stack<int> st;
@@ -254,7 +407,8 @@ vector<int> NGE(vector<int> &v){
 }
 vector<int> nge = NGE(v); // Main Function calling 
 
-// nth root of any number using binary search
+
+n-th root of any number (binary search)
 double lo = 1, hi = x, mid;
 while(hi - lo > eps){ // eps = 1e-6, if want 5 digit accurate
     mid = (hi+lo)/2;
@@ -262,7 +416,12 @@ while(hi - lo > eps){ // eps = 1e-6, if want 5 digit accurate
     else hi = mid;
 }
 
-// Binary Exponentiation when a, b & mod is 1e18
+
+binExp(b,M-2,M) calculates inverse of b
+(a / b) % M = a * binExp(b, M - 2, M)
+
+
+Binary Exponentiation
 int binMultiply(int a, int b, int M){
     int res = 0;
     while(b){
@@ -283,12 +442,15 @@ int binExp(int a, int b, int M){
 }
 binExp(50,binExp(64,32,mod-1),mod); // function calling
 
+
 // phi(M) = M * multiply_of(1-1/P) here, P is all distinct prime number
 // (a^b)%M = (a^(b%(M-1)))%M // ETF --> Euler Totient Function
 
-// n-th Fibonacci Number using Matrix Exponentiation
+
+n-th Fibonacci Number using Matrix Exponentiation
 const int mod = 1e9 + 7;
 const int sz = 2;
+
 
 struct Mat {
     int mat[sz][sz];
@@ -314,6 +476,7 @@ struct Mat {
     }
 };
 
+
 int Fib(int n) {
     Mat res;
     res.identity();
@@ -329,17 +492,20 @@ int Fib(int n) {
     return (res.mat[0][0] + res.mat[0][1]) % mod;
 }
 
-// n-th Permutation
+
+n-th Permutation
 template <typename T>
 vector<T> nthPermutation(vector<T>&v, int k) {
     vector<T>nums(v.begin(), v.end());
     int n = nums.size();
     vector<T> result;
 
+
     int64_t fact = 1;
     for (int i = 1; i <= n; ++i) {
         fact *= i;
     }
+
 
     for (int i = 0; i < n; ++i) {
         fact /= (n - i);
@@ -352,7 +518,8 @@ vector<T> nthPermutation(vector<T>&v, int k) {
     return result;
 }
 
-// int128 read and write
+
+int128 read and write
 __int128 read() {
     __int128 x = 0, f = 1;
     char ch = getchar();
@@ -375,7 +542,8 @@ void print(__int128 x) {
     putchar(x % 10 + '0');
 }
 
-// Large Number MOD
+
+Large Number MOD
 bool largeNumberMod(string number,int M)   // largeNumberMod("12345",10);
 {
     int now = number[0] - '0';
@@ -383,13 +551,16 @@ bool largeNumberMod(string number,int M)   // largeNumberMod("12345",10);
         now = ((now*10) + number[i]-'0') % M;
     }
 
+
 // if now ==  0 then it is possible to divide the number by  M
+
 
     if(now == 0) return true;
     else return false;
 }
 
-// Two Large Number Multiplication
+
+Two Large Number Multiplication
 string toString(int num)
 {
     if (num == 0) return "0";
@@ -400,15 +571,18 @@ string toString(int num)
         num /= 10;
     }
 
+
     reverse(s.begin(), s.end());
     return s;
 }
+
 
 string multiply(string num1, string num2) //string ans = multiply("123","125");
 {
     int n1_sz = num1.size();
     int n2_sz = num2.size();
     if (num1 == "0" || num2 == "0")  return "0";
+
 
     vector<int> result(n1_sz + n2_sz, 0);
     int i_n1 = 0;
@@ -417,6 +591,7 @@ string multiply(string num1, string num2) //string ans = multiply("123","125");
         int carry = 0;
         int n1 = num1[i] - '0';
         i_n2 = 0;
+
 
         for (int j = n2_sz - 1; j >= 0; j--) {
             int n2 = num2[j] - '0';
@@ -429,6 +604,7 @@ string multiply(string num1, string num2) //string ans = multiply("123","125");
         i_n1++;
     }
 
+
     int i = result.size() - 1;
     while (i >= 0 && result[i] == 0)   i--;
     if (i == -1)  return "0";
@@ -438,10 +614,12 @@ string multiply(string num1, string num2) //string ans = multiply("123","125");
     return s;
 }
 
-// DFS
+
+DFS
 const int N = 1e5 + 5;
 vector<int> g[N];
 vector<bool>visited(N);
+
 
 void dfs(int index) {
     visited[index] = true;
@@ -452,66 +630,39 @@ void dfs(int index) {
     }
 }
 
-// PBDS
-#include <ext/pb_ds/assoc_container.hpp>
-#include <ext/pb_ds/tree_policy.hpp>
-using namespace __gnu_pbds;
-template<class T> using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
-// s.order_of_key(x) = number of elements strictly less than x
-// *s.find_by_order(i) = ith element in set (0 index)
-
-// Bit Manipulation
-#define setbit(n)      __builtin_popcountll(n)  // Count of set bit
-#define zerobit(n)     __builtin_ctzll(n)       // Count of 0 bit before 1st 1
-#define getbit(n,i)    ((n & (1LL << i)) != 0)  // nth bit ?
-#define clearlsb(n,i)  (n & (~((1<<(i+1))-1)))  // unset upto ith bit rtl
-#define clearmsb(n,i)  (n & ((1<<(i+1))-1))     // unset before ith bit ltr
-#define setbit0(n,i)   (n & (~(1LL << i)))      // unset any bit
-#define setbit1(n,i)   (n | (1LL << i))         // set any bit
-#define togglebit(n,i) (n ^ (1LL << i))
 
 // sort pair by 2nd value => sorta -> ascending & sortd-> decending
 bool sorta(const pair<int, int> &a, const pair<int, int> &b) {return (a.second < b.second);}
 bool sortd(const pair<int, int> &a, const pair<int, int> &b) {return (a.second > b.second);}
 // Implementation : sort(v.begin(),v.end(),sorta); Here, v is vector of pairs
 
-=====================  Math ====================== 
 
-// Distance Between Two Poins
+=============  Math ============= 
+
+
+Distance Between Two Poins
 double point_dist(int a, int b, int x, int y) {
     return sqrt(((x - a) * (x - a)) + ((y - b) * (y - b)));
 }
 
+
 bool isPowerOfTwo(int n) {return !(n & (n - 1));}
 bool isPerfectSquare(int x) {if (x >= 0) {int sr = sqrt(x); return (sr * sr == x);} return false;}
+
 
 Equation of a line from two point ax+by=c , where
 a  = y2 - y1;     b  = x1 - x2;      c = ax1 + by1
 
+
 Check if the line intersects a circle if(ans <= radius)
 (abs(a*x + b*y + c)/sqrt(a*a+b*b))
 
+
 Area of a regular hexagon A = (3*sqrt(3)*a*a)/2;
 
-================= Sublime Build =================== 
 
-Sublime Build (Windows):
-{
-"cmd": ["g++.exe","-std=c++20", "${file}", "-o", "${file_base_name}.exe", "&&" , "${file_base_name}.exe<inputf.in>outputf.in"],
-"selector":"source.cpp",
-"shell":true,
-"working_dir":"$file_path"
-}
+============ Debug ============= 
 
-Sublime Build (Linux):
-{
-"cmd" : ["g++ -std=c++20 $file_name -o $file_base_name && timeout 10s ./$file_base_name<inputf.in>outputf.in"], 
-"selector" : "source.cpp",
-"shell": true,
-"working_dir" : "$file_path"
-}
-
-==================== Debug ====================== 
 
 #define debug(x) cerr << #x <<" "; _print(x); cerr << endl;
 void _print(int t) {cerr << t;}
@@ -528,4 +679,3 @@ template <class T> void _print(vector <T> v) {cerr << "[ "; for (T i : v) {_prin
 template <class T> void _print(set <T> v) {cerr << "[ "; for (T i : v) {_print(i); cerr << " ";} cerr << "]";}
 template <class T> void _print(multiset <T> v) {cerr << "[ "; for (T i : v) {_print(i); cerr << " ";} cerr << "]";}
 template <class T, class V> void _print(map <T, V> v) {cerr << "[ "; for (auto i : v) {_print(i); cerr << " ";} cerr << "]";}
-
