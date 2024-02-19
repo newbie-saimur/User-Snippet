@@ -1,0 +1,42 @@
+<snippet>
+	<content><![CDATA[
+const int digits = 10;
+int a[digits];
+
+int binExp(int a, int b) {
+    int res = 1;
+    while (b) {
+        if (b & 1) res = (res * a);
+        a = (a * a);
+        b >>= 1;
+    }
+    return res;
+}
+
+int digit_sum(int n)
+{
+    if (n < 10) return (n * (n + 1) / 2);
+    int d = log10(n);
+    int p = binExp(10, d);
+    int q = n / p;
+    int x = (q * a[d]) + ((q * (q - 1) / 2) * p);
+    int y = q * (n % p + 1);
+    return x + y + digit_sum(n % p);
+}
+
+void solve()
+{
+    int n; cin >> n;
+    int d = log10(n);
+    a[0] = 0; a[1] = 45;
+    for (int i = 1; i < d; i++) {
+        a[i + 1] = (10 * a[i]) + (45 * binExp(10, i));
+    }
+    cout << digit_sum(n) << '\n';
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>digit_sum_1toN</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.c++</scope>
+</snippet>
