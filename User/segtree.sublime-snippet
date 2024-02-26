@@ -1,0 +1,42 @@
+<snippet>
+	<content><![CDATA[
+const int N = 2e5 + 1;
+int a[N], seg[4 * N];
+
+void build(int index, int low, int high) {
+    if (low == high) {
+        seg[index] = a[low];
+        return;
+    }
+    int mid = (low + high) / 2;
+    build(2 * index, low, mid);
+    build(2 * index + 1, mid + 1, high);
+    seg[index] = seg[2 * index] ^ seg[2 * index + 1];
+}
+
+int query(int index, int low, int high, int l, int r) {
+    if (low >= l && high <= r) return seg[index];
+    if (low > r || high < l) return 0;
+    int mid = (low + high) / 2;
+    int left = query(2 * index, low, mid, l, r);
+    int right = query(2 * index + 1, mid + 1, high, l, r);
+    return left ^ right;
+}
+
+void update(int index, int low, int high, int i, int x) {
+    if (low > i || high < i) return;
+    if (low == high && low == i) {
+        seg[index] = x;
+        return;
+    }
+    int mid = (low + high) / 2;
+    update(2 * index, low, mid, i, x);
+    update(2 * index + 1, mid + 1, high, i, x);
+    seg[index] = min(seg[2 * index], seg[2 * index + 1]);
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>segtree</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.c++</scope>
+</snippet>
