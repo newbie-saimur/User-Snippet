@@ -18,23 +18,23 @@ public:
         seg[index] = min(seg[2 * index], seg[2 * index + 1]);
     }
 
-    int query(int index, int low, int high, int l, int r, int a[]) {
+    int query(int index, int low, int high, int l, int r) {
         if (low >= l && high <= r) return seg[index];
         if (low > r || high < l) return INT_MAX;
         int mid = (low + high) / 2;
-        int left = query(2 * index, low, mid, l, r, a);
-        int right = query(2 * index + 1, mid + 1, high, l, r, a);
+        int left = query(2 * index, low, mid, l, r);
+        int right = query(2 * index + 1, mid + 1, high, l, r);
         return min(left, right);
     }
 
-    void update(int index, int low, int high, int i, int x, int a[]) {
+    void update(int index, int low, int high, int i, int x) {
         if (low == high) {
             seg[index] = x;
             return;
         }
         int mid = (low + high) / 2;
-        if (i <= mid) update(2 * index, low, mid, i, x, a);
-        else update(2 * index + 1, mid + 1, high, i, x, a);
+        if (i <= mid) update(2 * index, low, mid, i, x);
+        else update(2 * index + 1, mid + 1, high, i, x);
         seg[index] = min(seg[2 * index], seg[2 * index + 1]);
     }
 };
