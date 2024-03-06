@@ -748,6 +748,7 @@ struct SGTree {
         n = size;
         seg.resize(4 * n + 1);
     }
+var NUTRAL_ELEMENT = {0,0,0,0};
     var single(int x) {
         if (x > 0) return {x, x, x, x};
         else return {0, 0, 0, x};
@@ -775,7 +776,7 @@ struct SGTree {
     }
     var query(int index, int low, int high, int l, int r) {
         if (low >= l && high <= r) return seg[index];
-        if (low > r || high < l) return {0, 0, 0, 0};
+        if (low > r || high < l) return NUTRAL_ELEMENT;
         int mid = (low + high) / 2;
         var left = query(2 * index, low, mid, l, r);
         var right = query(2 * index + 1, mid + 1, high, l, r);
