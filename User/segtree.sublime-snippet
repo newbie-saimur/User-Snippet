@@ -1,41 +1,62 @@
 <snippet>
 	<content><![CDATA[
-class SGTree {
+struct SGTree {
     vector<int> seg;
-public:
-    SGTree(int n) {
+    int n;
+    SGTree(int size) {
+        n = size;
         seg.resize(4 * n + 1);
+    }
+    int IDENTITY = 0;
+    int single(int x) {
+        return x;
+    }
+
+    int calc(int left, int right) {
+        return left + right;
     }
 
     void build(int index, int low, int high, int a[]) {
         if (low == high) {
-            seg[index] = a[low];
+            seg[index] = single(a[low]);
             return;
         }
         int mid = (low + high) / 2;
         build(2 * index, low, mid, a);
         build(2 * index + 1, mid + 1, high, a);
-        seg[index] = min(seg[2 * index], seg[2 * index + 1]);
+        seg[index] = calc(seg[2 * index], seg[2 * index + 1]);
+    }
+
+    void build(int a[]) {
+        build(1, 1, n, a);
     }
 
     int query(int index, int low, int high, int l, int r) {
         if (low >= l && high <= r) return seg[index];
-        if (low > r || high < l) return INT_MAX;
+        if (low > r || high < l) return IDENTITY;
         int mid = (low + high) / 2;
         int left = query(2 * index, low, mid, l, r);
         int right = query(2 * index + 1, mid + 1, high, l, r);
-        return min(left, right);
+        return calc(left, right);
+    }
+
+    int query(int l, int r) {
+        return query(1, 1, n, l, r);
     }
 
     void update(int index, int low, int high, int i, int x) {
         if (low == high) {
-            seg[index] = x;
+            seg[index] = single(x);
             return;
         }
         int mid = (low + high) / 2;
         if (i <= mid) update(2 * index, low, mid, i, x);
         else update(2 * index + 1, mid + 1, high, i, x);
-        seg[index] = min(seg[2 * index], seg[2 * index + 1]);
+        seg[index] = calc(seg[2 * index], seg[2 * index + 1]);
+    }
+
+    void update(int index, int value) {
+        update(1, 1, n, index, value);
     }
 };
 ]]></content>
