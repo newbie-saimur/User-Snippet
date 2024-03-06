@@ -7,7 +7,7 @@ struct SGTree {
         n = size;
         seg.resize(4 * n + 1);
     }
-    int IDENTITY = 0;
+    int NUTRAL_ELEMENT = 0;
     int single(int x) {
         return x;
     }
@@ -33,7 +33,7 @@ struct SGTree {
 
     int query(int index, int low, int high, int l, int r) {
         if (low >= l && high <= r) return seg[index];
-        if (low > r || high < l) return IDENTITY;
+        if (low > r || high < l) return NUTRAL_ELEMENT;
         int mid = (low + high) / 2;
         int left = query(2 * index, low, mid, l, r);
         int right = query(2 * index + 1, mid + 1, high, l, r);
