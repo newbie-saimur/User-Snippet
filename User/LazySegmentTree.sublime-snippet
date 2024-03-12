@@ -1,0 +1,68 @@
+<snippet>
+	<content><![CDATA[
+struct node {
+    int value = 0;
+    int lazy = 0;
+};
+
+struct SGTree {
+    vector<node> seg;
+    int n;
+    SGTree(int size) {
+        n = size;
+        seg.resize(4 * n + 1);
+    }
+    int NUTRAL_ELEMENT = 0;
+
+    void build(int index, int low, int high, int a[]) {
+        if (low == high) {
+            seg[index].value = a[low];
+            return;
+        }
+        int mid = (low + high) / 2;
+        build(2 * index, low, mid, a);
+        build(2 * index + 1, mid + 1, high, a);
+        seg[index].value = seg[2 * index].value + seg[2 * index + 1].value;
+    }
+
+    void build(int a[]) {
+        build(1, 1, n, a);
+    }
+
+    int query(int index, int low, int high, int l, int r, int carry) {
+        if (low > r || high < l) return NUTRAL_ELEMENT;
+        if (low >= l && high <= r) return seg[index].value + carry * (high - low + 1);
+        int mid = (low + high) / 2;
+        carry += seg[index].lazy;
+        int left = query(2 * index, low, mid, l, r, carry);
+        int right = query(2 * index + 1, mid + 1, high, l, r, carry);
+        return left + right;
+    }
+
+    int query(int l, int r) {
+        return query(1, 1, n, l, r, 0);
+    }
+
+    void update(int index, int low, int high, int l, int r, int x) {
+        if (low > r || high < l) return;
+        if (low >= l && high <= r) {
+            seg[index].value += (high - low + 1) * x;
+            seg[index].lazy += x;
+            return;
+        }
+        int mid = (low + high) / 2;
+        update(2 * index, low, mid, l, r, x);
+        update(2 * index + 1, mid + 1, high, l, r, x);
+        seg[index].value = seg[2 * index].value + seg[2 * index + 1].value + (high - low + 1) * seg[index].lazy;
+    }
+
+    void update(int left, int right, int value) {
+        update(1, 1, n, left, right, value);
+    }
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>LazySegmentTree</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.c++</scope>
+</snippet>
