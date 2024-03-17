@@ -1,4 +1,4 @@
-for((i = 1; i<=100; i++)); do
+for((i = 1; ; i++)); do
 	echo $i
 	./gen $i > input2.in
 	./main < inputf.in > outputf.in
