@@ -1,13 +1,12 @@
 <snippet>
 	<content><![CDATA[
-int max_subarray_sum(vector<int> &a) {
-    int max_so_far = -1e9, max_end_here = 0;
-    for (int i = 1; i < a.size(); i++) {
-        max_end_here += a[i];
-        if (max_end_here > max_so_far) max_so_far = max_end_here;
-        if (max_end_here < 0) max_end_here = 0;
+int max_subarray_sum(deque<int> &a) {
+    int ans = -1e9, sum = 0;
+    for (int i = 0; i < a.size(); i++) {
+        sum = max(a[i], sum + a[i]);
+        ans = max(ans, sum);
     }
-    return max_so_far;
+    return ans;
 }
 ]]></content>
 	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
