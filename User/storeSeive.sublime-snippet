@@ -4,8 +4,7 @@ const int N = 1e7 + 10;
 vector<bool> isPrime(N, 1);
 vector<int> prime;
 
-void seive()
-{
+void seive() {
     isPrime[0] = isPrime[1] = false;
     prime.push_back(0);
     for (int i = 2; i < N; i++) {
