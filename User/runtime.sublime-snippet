@@ -1,0 +1,17 @@
+<snippet>
+	<content><![CDATA[
+struct Runtime {
+    clock_t start;
+    Runtime() {
+        start = clock();
+    }
+    ~Runtime() {
+        printf("Runtime: %.4lfs\n", (double) (clock() - start) / CLOCKS_PER_SEC);
+    }
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>runtime</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.cpp</scope>
+</snippet>
