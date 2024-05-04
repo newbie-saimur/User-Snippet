@@ -1,0 +1,37 @@
+<snippet>
+	<content><![CDATA[
+	int n; cin >> n;
+    int a[n], parent[n], ind[n];
+    vector<int> lis;
+    memset(parent, -1, sizeof parent);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        int it = lower_bound(lis.begin(), lis.end(), a[i]) - lis.begin();
+        if (it == lis.size()) {
+            lis.push_back(a[i]);
+            ind[lis.size() - 1] = i;
+            parent[i] = (lis.size() == 1 ? -1 : ind[it - 1]);
+        }
+        else {
+            lis[it] = a[i];
+            ind[it] = i;
+            parent[i] = (it == 0 ? -1 : ind[it - 1]);
+        }
+    }
+
+    vector<int>LIS;
+    int it = ind[lis.size() - 1];
+    LIS.push_back(lis.back());
+    while (parent[it] != -1) {
+        it = parent[it];
+        LIS.push_back(a[it]);
+    }
+
+    for (int i = LIS.size() - 1; i >= 0; i--) cout << LIS[i] << ' ';
+    cout << '\n';
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>print_lis</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.cpp</scope>
+</snippet>
