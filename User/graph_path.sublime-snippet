@@ -1,0 +1,29 @@
+<snippet>
+	<content><![CDATA[
+const int N = 1e5 + 5;
+vector<int> g[N], parent(N);
+
+void dfs(int vertex, int par = -1) {
+    parent[vertex] = par;
+    for (auto child : g[vertex]) {
+        if (child != par) {
+            dfs(child, vertex);
+        }
+    }
+}
+
+vector<int> path(int vertex) {
+    vector<int>ans;
+    while (vertex != -1) {
+        ans.push_back(vertex);
+        vertex = parent[vertex];
+    }
+    reverse(ans.begin(), ans.end());
+    return ans;
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>graph_path</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.cpp</scope>
+</snippet>
