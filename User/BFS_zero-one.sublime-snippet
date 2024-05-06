@@ -30,5 +30,5 @@ int bfs() {
 	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
 	<tabTrigger>BFS_zero/one</tabTrigger>
 	<!-- Optional: Set a scope to limit where the snippet will trigger -->
-	<scope>source.cpp</scope>
+	<scope>source.c++</scope>
 </snippet>
