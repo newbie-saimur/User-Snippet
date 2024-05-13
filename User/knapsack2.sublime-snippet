@@ -1,0 +1,38 @@
+<snippet>
+	<content><![CDATA[
+const int N = 105, M = 1e5 + 5;
+int weight[N], value[N];
+int dp[N][M];
+
+
+int func(int index, int value_left) {
+	if (value_left == 0) return 0;
+	if (index < 0) return INT_MAX;
+	if (dp[index][value_left] != -1) return dp[index][value_left];
+	int ans = func(index - 1, value_left);
+	if (value_left >= value[index])
+		ans = min(ans, func(index - 1, value_left - value[index]) + weight[index]);
+
+
+	return dp[index][value_left] = ans;
+}
+void solve()
+{
+	int n, w; cin >> n >> w;
+	for (int i = 0; i < n; i++) cin >> weight[i] >> value[i];
+	memset(dp, -1, sizeof dp);
+	int max_value = 1e5;
+	for (int i = max_value; i >= 0; --i) {
+		if (func(n - 1, i) <= w) {
+			cout << i << '\n';
+			return;
+		}
+	}
+}
+
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>knapsack2</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>
