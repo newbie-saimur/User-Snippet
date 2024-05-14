@@ -1,0 +1,19 @@
+<snippet>
+	<content><![CDATA[
+vector<int> prev(maxWeight + 1, 0);
+  for (int i = weight[0]; i <= k; i++) prev[i] = value[0];
+
+
+  for (int i = 1; i < n; i++) {
+    for (int j = maxWeight; j >= 0; j--) {
+      if (weight[i] <= j) {
+        prev[j] = max(prev[j], prev[j - weight[i]] + value[i]);
+      }
+    }
+  }
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>knapsack</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>
