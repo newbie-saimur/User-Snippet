@@ -1,0 +1,26 @@
+<snippet>
+	<content><![CDATA[
+long countWaysToMakeChange(int *coins, int n, int value)
+{
+	vector<long> prev(value+1,0), cur(value+1,0);
+	for(int i=0; i<=value; i++) prev[i] = (i % coins[0] == 0);
+
+	for(int i=1; i<n; i++) {
+		for(int j=0; j<=value; j++) {
+			long notTake = prev[j];
+			long take = 0;
+			if (coins[i] <= j) {
+				take = cur[j - coins[i]];
+			}
+			cur[j] = take + notTake;
+		}
+		prev = cur;
+	}
+	return prev[value];
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>coin_change_number_of_ways</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

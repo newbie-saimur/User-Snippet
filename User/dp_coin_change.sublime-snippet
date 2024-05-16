@@ -1,0 +1,19 @@
+<snippet>
+	<content><![CDATA[
+int minimumCoins(vector<int> &num, int x)
+{
+	vector<int> dp(x + 1, 1e9);
+	dp[0] = 0;
+	for (int index = 0; index < num.size(); index++) {
+		for (int target = 0; target <= x; target++) {
+			if (num[index] <= target) dp[target] = min(dp[target], dp[target - num[index]] + 1);
+		}
+	}
+	return dp[x] >= 1e9 ? -1 : dp[x];
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>dp_coin_change</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>
