@@ -1,6 +1,7 @@
 <snippet>
 	<content><![CDATA[
-int LIS_Length() {
+int LIS_Length(vector<int> &v, int n) {
+    vector<int> ans;
     ans.push_back(v[0]);
     for (int i = 1; i < n; i++) {
         if (v[i] > ans.back()) ans.push_back(v[i]);
@@ -9,6 +10,7 @@ int LIS_Length() {
     }
     return ans.size();
 }
+
 ]]></content>
 	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
 	<tabTrigger>lengthlis</tabTrigger>
