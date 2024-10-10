@@ -1,4 +1,5 @@
 const int bs1 = 137, mod_bs1 = 127657753, bs2 = 277, mod_bs2 = 987654319;
+// 911382323, 972663749
 const int N = 1e6 + 5;
 int pw1[N], pw2[N], inv_pw1[N], inv_pw2[N];
 
