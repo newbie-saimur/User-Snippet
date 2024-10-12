@@ -1,7 +1,7 @@
 <snippet>
 	<content><![CDATA[
 using Mat = vector<vector<int>>;
-const int mod = 1e9 + 7;
+const int mod = 1e9;
 
 Mat multiply (Mat &a, Mat &b) {
     int sz = a.size();
@@ -27,15 +27,13 @@ Mat matexpo(Mat &T, int n) {
     return res;
 }
 
-int nth_num(int nth, int known_term = 3) {
+int nth_num(int nth, int known_term, vector<int> &base_mat) {
     Mat T(known_term, vector<int>(known_term));
-    T[0][0] = T[1][0] = T[2][1] = 1;
-    T[0][1] = 2; T[0][2] = 3;
-
+    // Insert Magic Matrix
     T = matexpo(T, nth - known_term);
     int ans = 0;
-    for (int i = 0; i < known_term; i++) {
-        ans = (ans + T[0][i]) % mod;
+    for (int i = 0, j = known_term - 1; i < known_term; i++, j--) {
+        ans = (ans + 1LL * base_mat[j] * T[0][i]) % mod;
     }
     return ans;
 }
