@@ -1,40 +1,53 @@
 <snippet>
 	<content><![CDATA[
-using Mat = vector<vector<int>>;
-const int mod = 1e9;
+const int mod = 1e9 + 7;
 
-Mat multiply (Mat &a, Mat &b) {
-    int sz = a.size();
-    Mat res(sz, vector<int>(sz, 0));
-    for (int i = 0; i < sz; i++) {
-        for (int j = 0; j < sz; j++) {
-            for (int k = 0; k < sz; k++) {
-                res[i][j] = (res[i][j] + 1LL * a[i][k] * b[k][j]) % mod;
-            }
+struct Mat {
+    int sz;
+    vector<vector<int>> mat;
+    Mat(int sz) {
+        this->sz = sz;
+        mat.resize(sz, vector<int>(sz, 0));
+    }
+    void identity_matrix(bool flag = 0) {
+        for (int i = 0; i < (flag ? sz - 1 : sz); i++) {
+            if (!flag) mat[i][i] = 1;
+            else mat[i][i + 1] = 1;
         }
     }
-    return res;
-}
+    Mat operator* (Mat a) {
+        Mat res(sz);
+        for (int i = 0; i < sz; i++) {
+            for (int j = 0; j < sz; j++) {
+                for (int k = 0; k < sz; k++) {
+                    res.mat[i][j] = (res.mat[i][j] + mat[i][k] * 1LL * a.mat[k][j]) % mod;
+                }
+            }
+        }
+        return res;
+    }
+};
 
-Mat matexpo(Mat &T, int n) {
-    int sz = T.size();
-    Mat res(sz, vector<int>(sz, 0));
-    for (int i = 0; i < sz; i++) res[i][i] = 1;
+Mat matExpo(Mat a, int n) {
+    Mat res(a.sz);
+    res.identity_matrix();
     while (n) {
-        if (n & 1) res = multiply(res, T);
-        T = multiply(T, T); n >>= 1;
+        if (n & 1) res = res * a;
+        a = a * a;
+        n >>= 1;
     }
     return res;
 }
 
-int nth_num(int nth, int known_term, vector<int> &base_mat) {
-    Mat T(known_term, vector<int>(known_term));
-    // Insert Magic Matrix
+int nth_term(int nth, int known_term, vector<int> &base_mat, vector<int> &coefficient_mat) {
+    Mat T(known_term);
+    for (int i = 0; i < known_term; i++) T.mat[i][0] = coefficient_mat[i];
+    T.identity_matrix(1);
     if (nth <= known_term) return base_mat[nth - 1];
-    T = matexpo(T, nth - known_term);
+    T = matExpo(T, nth - known_term);
     int ans = 0;
     for (int i = 0, j = known_term - 1; i < known_term; i++, j--) {
-        ans = (ans + 1LL * base_mat[j] * T[0][i]) % mod;
+        ans = (ans + 1LL * base_mat[j] * T.mat[i][0]) % mod;
     }
     return ans;
 }
