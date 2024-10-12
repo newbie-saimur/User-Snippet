@@ -2,11 +2,9 @@
 	<content><![CDATA[
 #include <bits/stdc++.h>
 using namespace std;
-#define int      long long
-int _;
+#define ll long long
 
-void solve()
-{
+void solve() {
 
 }
 
@@ -15,12 +13,11 @@ int32_t main() {
 
     int test = 1;
     //cin>>test;
-    for (_ = 1; _ <= test; _++)
-    {
+    for (int _ = 1; _ <= test; _++) {
         solve();
     }
     return 0;
-}  ${1:}
+}
 ]]></content>
 	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
 	<tabTrigger>cpp</tabTrigger>
