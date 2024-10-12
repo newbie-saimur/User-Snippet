@@ -30,6 +30,7 @@ Mat matexpo(Mat &T, int n) {
 int nth_num(int nth, int known_term, vector<int> &base_mat) {
     Mat T(known_term, vector<int>(known_term));
     // Insert Magic Matrix
+    if (nth <= known_term) return base_mat[nth - 1];
     T = matexpo(T, nth - known_term);
     int ans = 0;
     for (int i = 0, j = known_term - 1; i < known_term; i++, j--) {
