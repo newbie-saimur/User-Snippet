@@ -1,0 +1,23 @@
+<snippet>
+	<content><![CDATA[
+const int N = 1e5 + 5, k = 20;
+int sparse[N][k]; // K = log(N)
+void build(int a[], int n) {
+    for (int i = 0; i < n; i++) sparse[i][0] = a[i];
+    for (int i = 1; i < k; i++) {
+        for (int j = 0; j + (1 << i) <= n; j++) {
+            sparse[j][i] = max(sparse[j][i - 1], sparse[j + (1 << (i - 1))][i - 1]);
+        }
+    }
+}
+
+int query(int l, int r) {
+    int msb = __bit_width(r - l + 1) - 1;
+    return max(sparse[l][msb], sparse[r - (1 << msb) + 1][msb]);
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>sparseTable</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>
