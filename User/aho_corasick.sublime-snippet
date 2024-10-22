@@ -1,0 +1,62 @@
+<snippet>
+	<content><![CDATA[
+const int N = 1e6 + 5, A = 26;
+int trie[N][A], total = 1, node[N], slink[N], dp[N];
+
+void init() {
+    while (total--) {
+        memset(trie[total], 0, sizeof trie[total]);
+        dp[total] = 0;
+        slink[total] = 0;
+        node[total] = 0;
+    }
+    total = 1;
+}
+
+void add(string &s, int i) {
+    int cur = 0;
+    for (auto c : s) {
+        c -= 'a';
+        if (!trie[cur][c]) trie[cur][c] = total++;
+        cur = trie[cur][c];
+    }
+    node[i] = cur;
+}
+
+vector<int> order;
+void build() {
+    order.clear();
+    queue<int> q; q.push(0);
+    while (q.size()) {
+        int prev = q.front(); q.pop(); order.push_back(prev);
+        for (int ch = 0; ch < 26; ch++) {
+            int cur = trie[prev][ch];
+            if (!cur) continue;
+            q.push(cur);
+            if (!prev) continue;
+            int v = slink[prev];
+            while (v && !trie[v][ch]) v = slink[v];
+            slink[cur] = trie[v][ch];
+        }
+    }
+}
+
+void trav(string &s) {      // s = Text
+    int u = 0;
+    for (char ch : s) {
+        ch -= 'a';
+        while (u and !trie[u][ch]) u = slink[u];
+        u = trie[u][ch];
+        dp[u]++;
+    }
+    reverse(order.begin(), order.end());
+    for (int u : order) {
+        dp[slink[u]] += dp[u];
+    }
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>aho_corasick</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>
