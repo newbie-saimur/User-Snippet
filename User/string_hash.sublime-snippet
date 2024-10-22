@@ -1,3 +1,5 @@
+<snippet>
+	<content><![CDATA[
 const int N = 1e6 + 5;
 const int MOD = 1e9 + 7;
 const ll base[] = {97, 1000003};
@@ -64,3 +66,9 @@ void solve() {
     RangeHash machine(S);
     cout << machine.get(0, S.size() - 1) << '\n';
 }
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>string_hash</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>
