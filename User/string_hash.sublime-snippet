@@ -1,66 +1,66 @@
-const int bs1 = 137, mod_bs1 = 127657753, bs2 = 277, mod_bs2 = 987654319;
-// 911382323, 972663749
 const int N = 1e6 + 5;
-int pw1[N], pw2[N], inv_pw1[N], inv_pw2[N];
+const int MOD = 1e9 + 7;
+const ll base[] = {97, 1000003};
 
-int power(int a, int n, int mod) {
-    int ans = 1;
-    while (n) {
-        if (n & 1) ans = 1LL * ans * a % mod;
-        a = 1LL * a * a % mod;
-        n >>= 1;
+ll bigMod (ll a, ll e) {
+    if (e == -1) e = MOD - 2;
+    ll ret = 1;
+    while (e) {
+        if (e & 1) ret = ret * a % MOD;
+        a = a * a % MOD, e >>= 1;
     }
-    return ans;
+    return ret;
 }
 
-void precalc() {
-    pw1[0] = pw2[0] = inv_pw1[0] = inv_pw2[0] = 1;
+ll pwr[2][N], inv_pwr[2][N]; // {base, index_pos}
 
-    int inv_bs1 = power(bs1, mod_bs1 - 2, mod_bs1);
-    int inv_bs2 = power(bs2, mod_bs2 - 2, mod_bs2);
-
-    for (int i = 1; i < N; ++i) {
-        pw1[i] = 1LL * pw1[i - 1] * bs1 % mod_bs1;
-        pw2[i] = 1LL * pw2[i - 1] * bs2 % mod_bs2;
-
-        inv_pw1[i] = 1LL * inv_pw1[i - 1] * inv_bs1 % mod_bs1;
-        inv_pw2[i] = 1LL * inv_pw2[i - 1] * inv_bs2 % mod_bs2;
-    }
-}
-
-array<int, 2> str_hash(string& s) {
-    int n = s.size();
-    int hs1 = 0;
-    for (int i = 0; i < n; ++i) {
-        hs1 = (hs1 + (1LL * s[i] * pw1[i]) % mod_bs1) % mod_bs1;
-    }
-    int hs2 = 0;
-    for (int i = 0; i < n; ++i) {
-        hs2 = (hs2 + (1LL * s[i] * pw2[i]) % mod_bs2) % mod_bs2;
-    }
-    return {hs1, hs2};
-}
-
-array<int, 2> pref[N]; // {string_index, base_no}
-void build_pref(string& s) {
-    int n = s.size();
-    for (int i = 0; i < n; ++i) {
-        pref[i][0] = 1LL * s[i] * pw1[i] % mod_bs1;
-        if (i) pref[i][0] = (pref[i][0] + pref[i - 1][0]) % mod_bs1;
-
-        pref[i][1] = 1LL * s[i] * pw2[i] % mod_bs2;
-        if (i) pref[i][1] = (pref[i][1] + pref[i - 1][1]) % mod_bs2;
+void initHash() {
+    for (int it = 0; it < 2; ++it) {
+        pwr[it][0] = inv_pwr[it][0] = 1;
+        ll INV_P = bigMod(base[it], -1);
+        for (int i = 1; i < N; ++i) {
+            pwr[it][i] = pwr[it][i - 1] * base[it] % MOD;
+            inv_pwr[it][i] = inv_pwr[it][i - 1] * INV_P % MOD;
+        }
     }
 }
 
-array<int, 2> get_hash(int l, int r) {
-    array<int, 2> ans = {0, 0};
-    ans[0] = pref[r][0];
-    if (l) ans[0] = (pref[r][0] - pref[l - 1][0] + mod_bs1) % mod_bs1;
-    ans[0] = 1LL * ans[0] * inv_pw1[l] % mod_bs1;
+struct RangeHash {
+    vector <ll> hs[2], rev[2];
 
-    ans[1] = pref[r][1];
-    if (l) ans[1] = (pref[r][1] - pref[l - 1][1] + mod_bs2) % mod_bs2;
-    ans[1] = 1LL * ans[1] * inv_pw2[l] % mod_bs2;
-    return ans;
+    RangeHash (const string S, bool revFlag = 0) {
+        for (int it = 0; it < 2; ++it) {
+            hs[it].resize(S.size() + 1, 0);
+            for (int i = 0; i < S.size(); ++i) {
+                hs[it][i + 1] = (hs[it][i] + pwr[it][i + 1] * (S[i] - 'a' + 1)) % MOD;
+            }
+            if (revFlag) {
+                rev[it].resize(S.size() + 1, 0);
+                for (int i = 0; i < S.size(); ++i) {
+                    rev[it][i + 1] = (rev[it][i] + inv_pwr[it][i + 1] * (S[i] - 'a' + 1)) % MOD;
+                }
+            }
+        }
+    }
+
+    inline ll get (int l, int r) {
+        ll one = (hs[0][r + 1] - hs[0][l]) * inv_pwr[0][l + 1] % MOD;
+        ll two = (hs[1][r + 1] - hs[1][l]) * inv_pwr[1][l + 1] % MOD;
+        if (one < 0) one += MOD; if (two < 0) two += MOD;
+        return one << 31 | two;
+    }
+
+    inline ll getReverse (int l, int r) {
+        ll one = (rev[0][r + 1] - rev[0][l]) * pwr[0][r + 1] % MOD;
+        ll two = (rev[1][r + 1] - rev[1][l]) * pwr[1][r + 1] % MOD;
+        if (one < 0) one += MOD; if (two < 0) two += MOD;
+        return one << 31 | two;
+    }
+};
+
+void solve() {
+    initHash();
+    string S; cin >> S;
+    RangeHash machine(S);
+    cout << machine.get(0, S.size() - 1) << '\n';
 }
