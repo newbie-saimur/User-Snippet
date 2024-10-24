@@ -1,0 +1,31 @@
+<snippet>
+	<content><![CDATA[
+void solve() {
+	int n; cin >> n;
+	point p[n];
+	for (int i = 0; i < n; i++) p[i].read();
+	sort(p, p + n);
+	vector<point> convex_hull;
+	for (int i = 0; i < 2; i++) {
+		int sz = convex_hull.size();
+		for (auto C : p) {
+			while ((int)convex_hull.size() - sz >= 2) {
+				point A = convex_hull.end()[-2];
+				point B = convex_hull.end()[-1];
+				if (A.triangle(B, C) <= 0) break;
+				convex_hull.pop_back();
+			}
+			convex_hull.push_back(C);
+		}
+		convex_hull.pop_back();
+		reverse(p, p + n);
+	}
+	cout << convex_hull.size() << '\n';
+	for (auto x : convex_hull) cout << x.x << ' ' << x.y << '\n';
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>convex_hull</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>
