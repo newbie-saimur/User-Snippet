@@ -1,0 +1,92 @@
+<snippet>
+	<content><![CDATA[
+const int N = 3e6 + 5;
+array<int, N> len, lnk, cnt;
+int last, sz = 1;
+map<char, int> to[N];
+
+void init() {
+	while (sz) {
+		sz--;
+		to[sz].clear();
+	}
+	last = 0, sz = 1;
+}
+
+void add(char c) {
+	int cur = sz++;
+	len[cur] = len[last] + 1;
+	cnt[cur] = 1;
+	int u = last;
+	while (u != -1 and !to[u].count(c)) {
+		to[u][c] = cur;
+		u = lnk[u];
+	}
+	if (u == -1) {
+		lnk[cur] = 0;
+	}
+	else {
+		int v = to[u][c];
+		if (len[v] == len[u] + 1) {
+			lnk[cur] = v;
+		}
+		else {
+			int w = sz++;
+			len[w] = len[u] + 1, lnk[w] = lnk[v], to[w] = to[v];
+			while (u != -1 and to[u][c] == v) {
+				to[u][c] = w;
+				u = lnk[u];
+			}
+			lnk[cur] = lnk[v] = w;
+		}
+	}
+	last = cur;
+}
+
+long long dp[N];
+// number of distinct substring starting by any character
+long long calc(int u) {
+	if (dp[u] != -1) return dp[u];
+	long long ans = 1;
+	for (auto [ch, x] : to[u]) {
+		ans += calc(to[u][ch]);
+	}
+	return dp[u] = ans;
+}
+
+void build_cnt() {
+	vector<int> deg(sz);
+	for (int i = 0; i < sz; i++) deg[lnk[i]]++;
+	queue<int>q;
+	for (int i = 0; i < sz; i++) if (!deg[i]) q.push(i);
+	while (q.size()) {
+		int u = q.front();
+		q.pop();
+		int p = lnk[u];
+		cnt[p] += cnt[u];
+		deg[p]--;
+		if (!deg[p]) q.push(p);
+	}
+}
+
+void solve() {
+	lnk[0] = -1;
+	string s, t; cin >> s >> t;
+	for (auto &ch : s) add(ch);
+	build_cnt();
+	int cur = 0;
+	for (int i = 0; i < t.size(); i++) {
+		if (to[cur].count(t[i])) cur = to[cur][t[i]];
+		else {
+			cout << 0 << '\n';
+			return;
+		}
+	}
+	cout << cnt[cur] << '\n';
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>suffix_automata</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>
