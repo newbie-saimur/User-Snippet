@@ -1,0 +1,2298 @@
+Sublime Build : Linux
+{
+"cmd" : ["ulimit -s unlimited; g++ -std=c++20 $file_name -o $file_base_name && timeout 3s ./$file_base_name<inputf.in>outputf.in"], 
+"selector" : "source.cpp",
+"shell": true,
+"working_dir" : "$file_path"
+}
+
+HLD
+template<typename T>
+struct HLD {
+    int n;
+    vector<vector<int>> adj;
+    vector<int> parent, depth, heavy, head, pos;
+    vector<T> segtree;
+    int cur_pos;
+
+    function<T(T, T)> combine;
+    T identity;
+
+    HLD(int nodes, function<T(T, T)> combine_func, T identity_element)
+        : n(nodes), adj(nodes), parent(nodes, -1), depth(nodes, 0),
+          heavy(nodes, -1), head(nodes), pos(nodes), segtree(4 * nodes, identity_element),
+          cur_pos(0), combine(combine_func), identity(identity_element) {}
+
+    void add_edge(int u, int v) {
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    int dfs(int u) {
+        int size = 1, max_subtree = 0;
+        for (int v : adj[u]) {
+            if (v != parent[u]) {
+                parent[v] = u;
+                depth[v] = depth[u] + 1;
+                int subtree_size = dfs(v);
+                if (subtree_size > max_subtree) {
+                    max_subtree = subtree_size;
+                    heavy[u] = v;
+                }
+                size += subtree_size;
+            }
+        }
+        return size;
+    }
+
+    void decompose(int u, int h) {
+        head[u] = h;
+        pos[u] = cur_pos++;
+        if (heavy[u] != -1) {
+            decompose(heavy[u], h);
+        }
+        for (int v : adj[u]) {
+            if (v != parent[u] && v != heavy[u]) {
+                decompose(v, v);
+            }
+        }
+    }
+
+    void update(int idx, T value) {
+        int n = cur_pos;
+        segtree[idx += n] = value;
+        for (; idx > 1; idx /= 2) {
+            segtree[idx / 2] = combine(segtree[idx], segtree[idx ^ 1]);
+        }
+    }
+
+    T query(int l, int r) {
+        int n = cur_pos;
+        T res = identity;
+        for (l += n, r += n; l < r; l /= 2, r /= 2) {
+            if (l & 1) res = combine(res, segtree[l++]);
+            if (r & 1) res = combine(res, segtree[--r]);
+        }
+        return res;
+    }
+
+    T query_path(int u, int v) {
+        T res = identity;
+        while (head[u] != head[v]) {
+            if (depth[head[u]] > depth[head[v]]) swap(u, v);
+            res = combine(res, query(pos[head[v]], pos[v] + 1));
+            v = parent[head[v]];
+        }
+        if (depth[u] > depth[v]) swap(u, v);
+        res = combine(res, query(pos[u], pos[v] + 1));
+        return res;
+    }
+
+    void initialize(int root = 0) {
+        dfs(root);
+        decompose(root, root);
+    }
+};
+/*
+make everything 0 based
+after adding edge
+hld.initialize();
+*/
+
+Euler_tour_tree
+template<typename T>
+struct EulerTourTree {
+	int n;
+	vector<vector<int>> adj;
+	vector<int> in, out, depth, parent;
+	vector<T> segtree, lazy;
+	int timer;
+	function<T(T, T)> combine;
+	T identity;
+
+	EulerTourTree(int nodes, function<T(T, T)> combine_func, T identity_element)
+    	: n(nodes), adj(nodes), in(nodes), out(nodes), depth(nodes, 0),
+      	parent(nodes, -1), segtree(4 * nodes, identity_element), lazy(4 * nodes, 0),
+      	timer(0), combine(combine_func), identity(identity_element) {}
+
+	void add_edge(int u, int v) {
+    	adj[u].push_back(v);
+    	adj[v].push_back(u);
+	}
+
+	void dfs(int u, int p) {
+    	parent[u] = p;
+    	in[u] = timer++;
+    	for (int v : adj[u]) {
+        	if (v != p) {
+            	depth[v] = depth[u] + 1;
+            	dfs(v, u);
+        	}
+    	}
+    	out[u] = timer;
+	}
+
+	void push(int node, int l, int r) {
+    	if (lazy[node] != 0) {
+        	segtree[node] += lazy[node] * (r - l);
+        	if (l + 1 < r) {
+            	lazy[2 * node + 1] += lazy[node];
+            	lazy[2 * node + 2] += lazy[node];
+        	}
+        	lazy[node] = 0;
+    	}
+	}
+
+	void range_update(int node, int l, int r, int ql, int qr, T delta) {
+    	push(node, l, r);
+    	if (l >= qr || r <= ql) return;
+    	if (l >= ql && r <= qr) {
+        	lazy[node] += delta;
+        	push(node, l, r);
+        	return;
+    	}
+    	int mid = (l + r) / 2;
+    	range_update(2 * node + 1, l, mid, ql, qr, delta);
+    	range_update(2 * node + 2, mid, r, ql, qr, delta);
+    	segtree[node] = combine(segtree[2 * node + 1], segtree[2 * node + 2]);
+	}
+
+	void update(int idx, T value) {
+    	range_update(0, 0, n, idx, idx + 1, value - query(idx, idx + 1));
+	}
+
+	T query(int node, int l, int r, int ql, int qr) {
+    	push(node, l, r);
+    	if (l >= qr || r <= ql) return identity;
+    	if (l >= ql && r <= qr) return segtree[node];
+    	int mid = (l + r) / 2;
+    	return combine(query(2 * node + 1, l, mid, ql, qr),
+                   	query(2 * node + 2, mid, r, ql, qr));
+	}
+
+	T query(int l, int r) {
+    	return query(0, 0, n, l, r);
+	}
+
+	void update_subtree(int u, T delta) {
+    	range_update(0, 0, n, in[u], out[u], delta);
+	}
+
+	T query_subtree(int u) {
+    	return query(in[u], out[u]);
+	}
+
+	void update_path(int u, int v, T delta) {
+    	while (depth[u] > depth[v]) {
+        	update(in[u], query(in[u], in[u] + 1) + delta);
+        	u = parent[u];
+    	}
+    	while (depth[v] > depth[u]) {
+        	update(in[v], query(in[v], in[v] + 1) + delta);
+        	v = parent[v];
+    	}
+    	while (u != v) {
+        	update(in[u], query(in[u], in[u] + 1) + delta);
+        	update(in[v], query(in[v], in[v] + 1) + delta);
+        	u = parent[u];
+        	v = parent[v];
+    	}
+    	update(in[u], query(in[u], in[u] + 1) + delta);
+	}
+
+	void initialize(int root = 0) {
+    	dfs(root, -1);
+	}
+};
+
+// Example usage:
+// EulerTourTree<int> ett(5, [](int a, int b) { return a + b; }, 0);
+// ett.add_edge(0, 1);
+// ett.initialize();
+// ett.update(ett.in[1], 5);  // Update node 1's value to 5
+// ett.update_subtree(1, 3);  // Update the entire subtree rooted at node 1 with +3
+// ett.update_path(3, 4, 2);  // Update values along the path from node 3 to node 4
+
+Link_cut_tree
+template<typename T>
+struct LinkCutTree {
+	struct Node {
+    	int parent = -1, left = -1, right = -1;
+    	T value, sum;
+    	bool rev = false;
+
+    	Node(T val = T()) : value(val), sum(val) {}
+	};
+
+	vector<Node> nodes;
+	function<T(T, T)> combine;
+	T identity;
+
+	LinkCutTree(int n, function<T(T, T)> combine_func, T identity_element)
+    	: nodes(n), combine(combine_func), identity(identity_element) {}
+
+	bool isRoot(int x) {
+    	int p = nodes[x].parent;
+    	return p == -1 || (nodes[p].left != x && nodes[p].right != x);
+	}
+
+	void push(int x) {
+    	if (nodes[x].rev) {
+        	swap(nodes[x].left, nodes[x].right);
+        	if (nodes[x].left != -1) nodes[nodes[x].left].rev ^= true;
+        	if (nodes[x].right != -1) nodes[nodes[x].right].rev ^= true;
+        	nodes[x].rev = false;
+    	}
+	}
+
+	void update(int x) {
+    	nodes[x].sum = nodes[x].value;
+    	if (nodes[x].left != -1) nodes[x].sum = combine(nodes[x].sum, nodes[nodes[x].left].sum);
+    	if (nodes[x].right != -1) nodes[x].sum = combine(nodes[x].sum, nodes[nodes[x].right].sum);
+	}
+
+	void rotate(int x) {
+    	int p = nodes[x].parent;
+    	int gp = nodes[p].parent;
+
+    	if (!isRoot(p)) {
+        	if (nodes[gp].left == p) nodes[gp].left = x;
+        	else nodes[gp].right = x;
+    	}
+    	nodes[x].parent = gp;
+
+    	if (nodes[p].left == x) {
+        	nodes[p].left = nodes[x].right;
+        	if (nodes[x].right != -1) nodes[nodes[x].right].parent = p;
+        	nodes[x].right = p;
+    	} else {
+        	nodes[p].right = nodes[x].left;
+        	if (nodes[x].left != -1) nodes[nodes[x].left].parent = p;
+        	nodes[x].left = p;
+    	}
+    	nodes[p].parent = x;
+
+    	update(p);
+    	update(x);
+	}
+
+	void splay(int x) {
+    	while (!isRoot(x)) {
+        	int p = nodes[x].parent;
+        	int gp = nodes[p].parent;
+        	if (!isRoot(p)) push(gp);
+        	push(p);
+        	push(x);
+
+        	if (!isRoot(p)) {
+            	if ((nodes[gp].left == p) == (nodes[p].left == x)) rotate(p);
+            	else rotate(x);
+        	}
+        	rotate(x);
+    	}
+    	push(x);
+	}
+
+	int expose(int x) {
+    	int last = -1;
+    	for (int y = x; y != -1; y = nodes[y].parent) {
+        	splay(y);
+        	nodes[y].right = last;
+        	update(y);
+        	last = y;
+    	}
+    	splay(x);
+    	return last;
+	}
+
+	void makeRoot(int x) {
+    	expose(x);
+    	nodes[x].rev ^= true;
+    	push(x);
+	}
+
+	void link(int x, int y) {
+    	makeRoot(x);
+    	nodes[x].parent = y;
+	}
+
+	void cut(int x) {
+    	expose(x);
+    	if (nodes[x].left != -1) {
+        	nodes[nodes[x].left].parent = -1;
+        	nodes[x].left = -1;
+        	update(x);
+    	}
+	}
+
+	T queryPath(int x, int y) {
+    	makeRoot(x);
+    	expose(y);
+    	return nodes[y].sum;
+	}
+
+	void updateNode(int x, T value) {
+    	expose(x);
+    	nodes[x].value = value;
+    	update(x);
+	}
+};
+
+/*
+Example Usage:
+LinkCutTree<int> lct(5, [](int a, int b) { return a + b; }, 0);
+lct.link(0, 1);           	// Create an edge between nodes 0 and 1
+lct.link(1, 2);           	// Create an edge between nodes 1 and 2
+lct.updateNode(1, 5);     	// Update the value of node 1 to 5
+lct.queryPath(0, 2);      	// Query the path sum between nodes 0 and 2
+lct.cut(1);               	// Cut the connection between nodes 0 and 1
+lct.link(2, 3);           	// Create an edge between nodes 2 and 3
+*/
+
+DynamicConnectivity
+struct DynamicConnectivity {
+	struct Node {
+    	int left, right, parent;
+    	bool reverse;
+    	int size;
+
+    	Node() : left(-1), right(-1), parent(-1), reverse(false), size(1) {}
+	};
+
+	vector<Node> nodes;
+
+	DynamicConnectivity(int n) : nodes(n) {}
+
+	void ensureNode(int u) {
+    	if (u >= nodes.size()) nodes.resize(u + 1);
+	}
+
+	void access(int u) {
+    	ensureNode(u);
+    	int last = -1;
+    	for (int v = u; v != -1; v = nodes[v].parent) {
+        	splay(v);
+        	nodes[v].right = last;
+        	last = v;
+    	}
+    	splay(u);
+	}
+
+	void splay(int u) {
+    	while (nodes[u].parent != -1) {
+        	int p = nodes[u].parent;
+        	int gp = nodes[p].parent;
+        	if (gp != -1) {
+            	if ((nodes[gp].left == p) == (nodes[p].left == u)) rotate(p);
+            	else rotate(u);
+        	}
+        	rotate(u);
+    	}
+	}
+
+	void rotate(int u) {
+    	int p = nodes[u].parent;
+    	int gp = p != -1 ? nodes[p].parent : -1;
+
+    	if (p != -1) {
+        	if (u == nodes[p].left) {
+            	nodes[p].left = nodes[u].right;
+            	if (nodes[u].right != -1) nodes[nodes[u].right].parent = p;
+            	nodes[u].right = p;
+        	} else {
+            	nodes[p].right = nodes[u].left;
+            	if (nodes[u].left != -1) nodes[nodes[u].left].parent = p;
+            	nodes[u].left = p;
+        	}
+    	}
+
+    	nodes[u].parent = gp;
+    	nodes[p].parent = u;
+
+    	if (gp != -1) {
+        	if (nodes[gp].left == p) nodes[gp].left = u;
+        	else nodes[gp].right = u;
+    	}
+	}
+
+	void link(int u, int v) {
+    	ensureNode(u);
+    	ensureNode(v);
+    	access(u);
+    	access(v);
+    	nodes[u].parent = v;
+	}
+
+	void cut(int u, int v) {
+    	access(u);
+    	access(v);
+    	if (nodes[u].parent == v) nodes[u].parent = -1;
+    	else if (nodes[v].parent == u) nodes[v].parent = -1;
+	}
+
+	// Check if u and v are connected
+	bool connected(int u, int v) {
+    	access(u);
+    	access(v);
+    	return u == v || nodes[u].parent != -1;
+	}
+};
+
+// Example usage:
+// DynamicConnectivity dc(5); // Initialize the structure for 5 nodes
+// dc.link(0, 1); // Link node 0 and node 1
+// (dc.connected(0, 2) ? "Yes" : "No") << endl;
+// dc.cut(1, 2); // Cut the connection between node 1 and node 2
+
+All_pair_shortest_path
+/*
+Johnson’s Algorithm is efficient for graphs that may contain negative weights while avoiding negative weight cycles.
+O(V^2 logV).
+*/
+const int INF = numeric_limits<int>::max();
+struct Johnson {
+	int num_vertices;
+	vector<vector<pair<int, int>>> graph;
+
+	Johnson(int n) : num_vertices(n), graph(n) {}
+
+	void add_edge(int u, int v, int weight) {
+    	graph[u].emplace_back(v, weight);
+	}
+
+	vector<int> bellman_ford(int source) {
+    	vector<int> distance(num_vertices, INF);
+    	distance[source] = 0;
+
+    	for (int i = 0; i < num_vertices - 1; ++i) {
+        	for (int u = 0; u < num_vertices; ++u) {
+            	for (const auto& edge : graph[u]) {
+                	int v = edge.first;
+                	int weight = edge.second;
+                	if (distance[u] != INF && distance[u] + weight < distance[v]) {
+                    	distance[v] = distance[u] + weight;
+                	}
+            	}
+        	}
+    	}
+
+    	return distance;
+	}
+
+	vector<int> dijkstra(int source) {
+    	vector<int> distance(num_vertices, INF);
+    	distance[source] = 0;
+    	priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    	pq.emplace(0, source);
+
+    	while (!pq.empty()) {
+        	int dist = pq.top().first;
+        	int u = pq.top().second;
+        	pq.pop();
+
+        	if (dist > distance[u]) continue;
+
+        	for (const auto& edge : graph[u]) {
+            	int v = edge.first;
+            	int weight = edge.second;
+            	if (distance[u] != INF && distance[u] + weight < distance[v]) {
+                	distance[v] = distance[u] + weight;
+                	pq.emplace(distance[v], v);
+            	}
+        	}
+    	}
+
+    	return distance;
+	}
+
+	vector<vector<int>> run() {
+    	vector<vector<pair<int, int>>> modified_graph(num_vertices + 1);
+    	for (int u = 0; u < num_vertices; ++u) {
+        	for (const auto& edge : graph[u]) {
+            	modified_graph[u].emplace_back(edge);
+        	}
+        	modified_graph[num_vertices].emplace_back(u, 0);
+    	}
+
+    	vector<int> h = bellman_ford(num_vertices);
+
+    	vector<vector<pair<int, int>>> reweighted_graph(num_vertices);
+    	for (int u = 0; u < num_vertices; ++u) {
+        	for (const auto& edge : graph[u]) {
+            	int v = edge.first;
+            	int weight = edge.second;
+            	if (h[u] != INF && h[v] != INF) {
+                	reweighted_graph[u].emplace_back(v, weight + h[u] - h[v]);
+            	}
+        	}
+    	}
+
+    	vector<vector<int>> all_pairs_shortest_paths(num_vertices, vector<int>(num_vertices, INF));
+    	for (int u = 0; u < num_vertices; ++u) {
+        	vector<int> distances = dijkstra(u);
+        	for (int v = 0; v < num_vertices; ++v) {
+            	if (distances[v] != INF) {
+                	all_pairs_shortest_paths[u][v] = distances[v] + h[v] - h[u];
+            	}
+        	}
+    	}
+
+    	return all_pairs_shortest_paths;
+	}
+
+};
+// Example usage
+// Johnson johnson(num_vertices);
+// johnson.add_edge(0, 1, -2);
+// vector<vector<int>> result = johnson.run();
+
+Flow
+struct Graph {
+	struct Edge {
+    	int to;
+    	int capacity;
+    	int flow;
+    	int reverseIdx;
+	};
+
+	int numNodes;
+	int source, sink;
+	vector<vector<Edge>> adj;
+
+	Graph(int n, int source, int sink) : numNodes(n), source(source), sink(sink) {
+    	adj.resize(n);
+	}
+
+	void addEdge(int u, int v, int capacity) {
+    	Edge a = {v, capacity, 0, (int) adj[v].size()};
+    	Edge b = {u, 0, 0, (int) adj[u].size()};
+    	adj[u].push_back(a);   // Forward edge
+    	adj[v].push_back(b);   // Reverse edge
+	}
+
+	bool dfs(int node, int parent[], int parentEdge[]) {
+    	if (node == sink) return true;
+    	for (int i = 0; i < adj[node].size(); ++i) {
+        	Edge &edge = adj[node][i];
+        	int residualCapacity = edge.capacity - edge.flow;
+        	if (residualCapacity > 0 && parent[edge.to] == -1) {
+            	parent[edge.to] = node;
+            	parentEdge[edge.to] = i;
+            	if (dfs(edge.to, parent, parentEdge)) return true;
+        	}
+    	}
+    	return false;
+	}
+
+	int fordFulkerson() {
+    	int maxFlow = 0;
+    	int parent[numNodes], parentEdge[numNodes];
+
+    	while (true) {
+        	memset(parent, -1, sizeof(parent));
+        	if (!dfs(source, parent, parentEdge)) break;
+
+        	int pathFlow = INT_MAX;
+        	for (int node = sink; node != source; node = parent[node]) {
+            	Edge &edge = adj[parent[node]][parentEdge[node]];
+            	pathFlow = min(pathFlow, edge.capacity - edge.flow);
+        	}
+
+        	for (int node = sink; node != source; node = parent[node]) {
+            	Edge &edge = adj[parent[node]][parentEdge[node]];
+            	edge.flow += pathFlow;
+            	adj[edge.to][edge.reverseIdx].flow -= pathFlow;
+        	}
+        	maxFlow += pathFlow;
+    	}
+    	return maxFlow;
+	}
+};
+// int n = 4; // Number of nodes
+// int source = 0, sink = 3;
+// Graph graph(n, source, sink);
+// graph.addEdge(0, 1, 10);
+// "The maximum flow is: graph.fordFulkerson()
+
+SCC
+constexpr int N = 1E5 + 5;
+vector<int>v[N] , v_rev[N];
+vector<bool>used(N);
+vector<int>comp;
+vector<int>order;
+void dfs1(int ver) {
+	used[ver] =  true;
+	for (int child : v[ver]) {
+		if (!used[child])
+			dfs1(child);
+	}
+	order.emplace_back(ver); // order
+}
+void dfs2(int ver) {
+	used[ver] = true;
+	comp.emplace_back(ver); // pushing comp
+	for (int child : v_rev[ver]) {
+		if (!used[child])
+			dfs2(child);
+	}
+}
+void tcase() {
+	int n; cin >> n;
+	for (int i = 1; i <= n; ++i) {
+		int x, y; cin >> x >> y;
+		v[x].emplace_back(y);
+		v_rev[y].emplace_back(x);
+	}
+	for (int i = 1; i <= n; ++i) {
+		int x, y; cin >> x >> y;
+		v[x].emplace_back(y);
+		v_rev[y].emplace_back(x);
+	}
+	for (int i = 1; i <= n; ++i) {
+		if (!used[i])
+			dfs1(i);
+	}
+	used.assign(N, false);
+	reverse(order.begin(), order.end());
+	for (int x : order) {
+		if (!used[x])
+			dfs2(x);
+		for (int c : comp)
+			cout << c << ' ';
+		cout << '\n';
+		comp.clear();
+	}
+}
+				BINARY_UPLIFTING
+const int N = 1e5 + 5;
+const int LOG = __bit_width(N) + 1;
+
+vector<int> v[N];
+vector<int> lev(N);
+vector<vector<int>> up(N, vector<int>(LOG));
+
+void dfs(int a, int parent) {
+	up[a][0] = parent;
+	for (int i = 1; i < LOG; ++i) {
+		if (up[a][i - 1] != -1)
+			up[a][i] = up[up[a][i - 1]][i - 1];
+		else
+			up[a][i] = -1;
+	}
+	for (int b : v[a]) {
+		if (b != parent) {
+			lev[b] = lev[a] + 1;
+			dfs(b, a);
+		}
+	}
+}
+
+int get_lca(int a, int b) {
+	if (lev[a] < lev[b])
+		swap(a, b);
+
+	int dif = lev[a] - lev[b];
+
+	for (int k = LOG - 1; k >= 0; --k) {
+		if (dif & (1 << k))
+			a = up[a][k];
+	}
+
+	if (a == b)
+		return a;
+
+	for (int k = LOG - 1; k >= 0; --k) {
+		if (up[a][k] != up[b][k]) {
+			a = up[a][k];
+			b = up[b][k];
+		}
+	}
+
+	return up[a][0];
+}
+
+int get_kth_ancestor(int node, int k) {
+	for (int i = 0; i < LOG; ++i) {
+		if (k & (1 << i)) {
+			node = up[node][i];
+			if (node == -1)
+				break;
+		}
+	}
+	return node;
+}
+
+int legendre(i64 n, i64 p) { // only if p is prime -> max x such that p^x|n!
+	i64 ans = 0;
+	while (n) {
+		ans += n / p;
+		n /= p;
+	}
+	return ans;
+}
+
+LAZY
+template <typename T>
+class LazySegmentTree {
+	struct Node {
+		T value;
+		int count; // Optional: can be used for counting occurrences
+		Node() : value(T()), count(0) {}
+		Node(T v, int c) : value(v), count(c) {}
+	};
+
+	vector<Node> tree;
+	vector<int> lazy;
+	size_t n;
+	function<Node(const Node&, const Node&)> merge;
+	T identity; // Identity value for the merge operation
+
+	void propagate(int node, int start, int end) {
+		if (lazy[node] != 0) {
+			tree[node].value += lazy[node];
+			if (start != end) {
+				lazy[node << 1] += lazy[node];
+				lazy[(node << 1) + 1] += lazy[node];
+			}
+			lazy[node] = 0;
+		}
+	}
+
+	void build(int node, int start, int end, const vector<T>& values) {
+		if (start == end) {
+			tree[node] = {values[start], 1};
+		} else {
+			int mid = (start + end) >> 1;
+			build(node << 1, start, mid, values);
+			build((node << 1) + 1, mid + 1, end, values);
+			tree[node] = merge(tree[node << 1], tree[(node << 1) + 1]);
+		}
+	}
+
+	void update(int node, int start, int end, int l, int r, int val) {
+		propagate(node, start, end);
+		if (start > r || end < l) return;
+		if (start >= l && end <= r) {
+			lazy[node] += val;
+			propagate(node, start, end);
+			return;
+		}
+		int mid = (start + end) >> 1;
+		update(node << 1, start, mid, l, r, val);
+		update((node << 1) + 1, mid + 1, end, l, r, val);
+		tree[node] = merge(tree[node << 1], tree[(node << 1) + 1]);
+	}
+
+	Node query(int node, int start, int end, int l, int r) {
+		propagate(node, start, end);
+		if (start > r || end < l) {
+			return Node(identity, 0); // Return identity node if out of bounds
+		}
+		if (start >= l && end <= r) {
+			return tree[node];
+		}
+		int mid = (start + end) >> 1;
+		Node q1 = query(node << 1, start, mid, l, r);
+		Node q2 = query((node << 1) + 1, mid + 1, end, l, r);
+		return merge(q1, q2);
+	}
+
+public:
+	LazySegmentTree(const vector<T>& values,
+	                function<Node(const Node&, const Node&)> mFunc,
+	                T id)
+		: merge(mFunc), identity(id) {
+		n = values.size();
+		tree.resize(4 * n);
+		lazy.assign(4 * n, 0);
+		build(1, 0, n - 1, values);
+	}
+
+	void range_update(int l, int r, int val) {
+		update(1, 0, n - 1, l, r, val);
+	}
+
+	T range_query(int l, int r) {
+		return query(1, 0, n - 1, l, r).value;
+	}
+};
+
+SEGMENT_TREE
+template <typename T>
+struct SegmentTree {
+  vector<T> t;
+  int n;
+  function<T(T, T)> mrg; // Merge function
+  T id; // Identity value
+
+  SegmentTree(int size, function<T(T, T)> mergeFunc, T identityValue)
+    : n(size), mrg(mergeFunc), id(identityValue) {
+    t.assign(4 * n, id);
+  }
+
+  SegmentTree(const vector<T>& values, function<T(T, T)> mergeFunc, T identityValue)
+    : mrg(mergeFunc), id(identityValue) {
+    n = values.size();
+    t.assign(4 * n, id);
+    build(values, 1, 0, n - 1);
+  }
+
+  void build(const vector<T>& values, int node, int start, int end) {
+    if (start == end) {
+      t[node] = values[start];
+      return;
+    }
+    int mid = (start + end) >> 1;
+    int left = node << 1, right = left | 1;
+    build(values, left, start, mid);
+    build(values, right, mid + 1, end);
+    t[node] = mrg(t[left], t[right]);
+  }
+
+  void update(int node, int start, int end, int idx, T value) {
+    if (start > idx || end < idx) return;
+    if (start == end && start == idx) {
+      t[node] = value;
+      return;
+    }
+    int mid = (start + end) >> 1;
+    int left = node << 1, right = left | 1;
+    update(left, start, mid, idx, value);
+    update(right, mid + 1, end, idx, value);
+    t[node] = mrg(t[left], t[right]);
+  }
+
+  T query(int node, int start, int end, int left, int right) {
+    if (start > right || end < left) return id;
+    if (start >= left && end <= right) return t[node];
+    int mid = (start + end) >> 1;
+    T l_query = query(node << 1, start, mid, left, right);
+    T r_query = query((node << 1) | 1, mid + 1, end, left, right);
+    return mrg(l_query, r_query);
+  }
+
+  void update(int idx, T value) {
+    update(1, 0, n - 1, idx, value);
+  }
+
+  T query(int left, int right) {
+    return query(1, 0, n - 1, left, right);
+  }
+};
+
+
+TOPO_SORT
+void tcase() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> graph[N];
+    int indegree[N] {};
+    queue<int> q;
+    for (int i = 0; i < m; i++) {
+        int a, b;
+        cin >> a >> b;
+        graph[a].push_back(b);
+        indegree[b]++;
+    }
+    for (int i = 1; i <= n; ++i) {
+        if (indegree[i] == 0)
+            q.emplace(i);
+    }
+    vector<int>order;
+    while (!q.empty()) {
+        int cur = q.front();
+        q.pop(); order.emplace_back(cur);
+        for (int child : graph[cur]) {
+            if (--indegree[child] == 0) {
+                q.emplace(child);
+            }
+        }
+    }
+
+    for (auto x : order)
+        cout << x << ' ';
+    cout << '\n';
+}
+
+vector<int> z_function(string s) {
+    int n = s.size();
+    vector<int> z(n);
+    int l = 0, r = 0;
+    for (int i = 1; i < n; i++) {
+        if (i < r) {
+            z[i] = min(r - i, z[i - l]);
+        }
+        while (i + z[i] < n && s[z[i]] == s[i + z[i]]) {
+            z[i]++;
+        }
+        if (i + z[i] > r) {
+            l = i;
+            r = i + z[i];
+        }
+    }
+    return z;
+}
+
+STRING_HASHING_WITH_UPDATE
+constexpr  int base1 = 121, base2 = 263;
+constexpr  int mod1 = 1E9 + 7, mod2 = 1E9 + 9;
+constexpr  int N = 2E5 + 5; // modify
+ 
+int p(int a, int b, int M) {
+  int ans = 1 % M;
+  while (b) {
+      if (b & 1) {
+          ans = 1LL * ans * a % M;
+      }
+      a = 1LL * a * a % M;
+      b >>= 1;
+  }
+  return ans;
+}
+ 
+int inv(int n, int m) {
+  return p(n, m - 2, m);
+}
+array<int,2>pw[N],invpw[N];
+ 
+void pre() {
+  pw[0][0] = 1;
+  pw[0][1] = 1;
+  for (int i = 1; i < N; ++i) {
+      pw[i][0] = 1LL * pw[i - 1][0] * base1 % mod1;
+      pw[i][1] = 1LL * pw[i - 1][1] * base2 % mod2;
+  }
+  invpw[0][0] = 1;
+  invpw[0][1] = 1;
+  int iv1 = inv(base1, mod1);
+  int iv2 = inv(base2, mod2);
+  for (int i = 1; i < N; ++i) {
+      invpw[i][0] = 1LL * invpw[i - 1][0] * iv1 % mod1;
+      invpw[i][0] %= mod1;
+      invpw[i][1] = 1LL * invpw[i - 1][1] * iv2 % mod2;
+      invpw[i][1] %= mod2;
+  }
+}
+ 
+ 
+using Node = array<int, 2>;
+struct hashing {
+    string s;
+    int n;
+ 
+    vector<Node> t;
+    hashing() {}
+ 
+    hashing(string _s) {
+        s = _s;
+        n = s.size();
+        t.resize(n << 2);
+        build(1, 0, n - 1);
+    }
+ 
+    Node combine(Node a, Node b) {
+        Node x = Node{(a[0] + b[0]) % mod1, (a[1] + b[1]) % mod2};
+        return x;
+    }
+ 
+    Node mul(Node a, int x) {
+        Node P = {int(1LL * a[0] * x % mod1), int(1LL * a[1] * x % mod2)};
+        return P;
+    }
+    Node mul(Node a,Node b){
+    	a[0] = 1LL * a[0] * b[0] % mod1;
+    	a[1] = 1LL * a[1] * b[1] % mod2;
+    	return a;
+    }
+ 
+    void build(int node, int st, int en) {
+        if (st == en) {
+            t[node] = mul(pw[st], s[st]);
+            return;
+        }
+        int mid = (st + en) >> 1;
+        build(node << 1, st, mid);
+        build(node << 1 | 1, mid + 1, en);
+        t[node] = combine(t[node << 1], t[node << 1 | 1]);
+    }
+ 
+    void update(int node, int st, int en, int i, char v) {
+        if (i < st || i > en)
+            return;
+        if (st == en) {
+            t[node] = mul(pw[i], v);
+            s[i] = v;
+            return;
+        }
+        int mid = (st + en) >> 1;
+        update(node << 1, st, mid, i, v);
+        update(node << 1 | 1, mid + 1, en, i, v);
+        t[node] = combine(t[node << 1], t[node << 1 | 1]);
+    }
+ 
+    Node query(int node, int st, int en, int l, int r) {
+        if (l > en || r < st)
+            return Node{0, 0};
+        if (st >= l && en <= r)
+            return t[node];
+        int mid = (st + en) >> 1;
+        Node p = query(node << 1, st, mid, l, r);
+        Node q = query(node << 1 | 1, mid + 1, en, l, r);
+        return combine(p, q);
+    }
+ 
+    void upd(int pos, char ch) {
+        update(1, 0, n - 1, pos, ch);
+    }
+ 
+    Node qry(int l, int r) {
+        return query(1, 0, n - 1, l, r);
+    }
+    Node get_hash(int l,int r){
+    	return mul(qry(l,r),invpw[l]);
+    }
+};
+
+STRING_HASHING
+constexpr int base1 = 121, base2 = 263;
+constexpr int mod1 = 1E9 + 7, mod2 = 1E9 + 9;
+constexpr int N = 1E6 + 5; // modify
+
+array<int, 2> pw[N], invpw[N];
+
+int p(int a, int b, int M) {
+      int ans = 1 % M;
+      while (b) {
+          if (b & 1) {
+              ans = 1LL * ans * a % M;
+          }
+          a = 1LL * a * a % M;
+          b >>= 1;
+      }
+      return ans;
+  }
+ 
+int inv(int n, int m) {
+  return p(n, m - 2, m);
+}
+void pre() {
+      pw[0][0] = 1;
+      pw[0][1] = 1;
+      for (int i = 1; i < N; ++i) {
+          pw[i][0] = (1LL * pw[i - 1][0] * base1) % mod1;
+          pw[i][1] = (1LL * pw[i - 1][1] * base2) % mod2;
+      }
+      invpw[0][0] = 1;
+      invpw[0][1] = 1;
+      int iv1 = inv(base1, mod1);
+      int iv2 = inv(base2, mod2);
+      for (int i = 1; i < N; ++i) {
+          invpw[i][0] = (1LL * invpw[i - 1][0] * iv1) % mod1;
+          invpw[i][1] = (1LL * invpw[i - 1][1] * iv2) % mod2;
+      }
+  }
+
+struct Hashing {
+  string s;
+  array<int, 2> pref[N];
+
+  array<int, 2> get_hash(string &s) {
+      int n = s.size();
+      array<int, 2> hash{0, 0};
+      for (int i = 0; i < n; ++i) {
+          hash[0] = (hash[0] + 1LL * s[i] * pw[i][0]) % mod1;
+          hash[1] = (hash[1] + 1LL * s[i] * pw[i][1]) % mod2;
+      }
+      return hash;
+  }
+
+  void build(string &t) {
+      s = t;
+      int n = s.size();
+      for (int i = 0; i < n; ++i) {
+          pref[i][0] = (1LL * s[i] * pw[i][0]) % mod1;
+          if (i) pref[i][0] = (pref[i][0] + pref[i - 1][0]) % mod1;
+          pref[i][1] = (1LL * s[i] * pw[i][1]) % mod2;
+          if (i) pref[i][1] = (pref[i][1] + pref[i - 1][1]) % mod2;
+      }
+  }
+
+  long long get_sub_hash(int l, int r) {
+        array<int, 2> hs{0, 0};
+        hs[0] = pref[r][0];
+        if (l) hs[0] = (hs[0] - pref[l - 1][0] + mod1) % mod1;
+        hs[0] = 1LL * hs[0] * invpw[l][0] % mod1;
+        hs[1] = pref[r][1];
+        if (l) hs[1] = (hs[1] - pref[l - 1][1] + mod2) % mod2;
+        hs[1] = 1LL * hs[1] * invpw[l][1] % mod2;
+        return (1LL * hs[0] << 31) | hs[1];
+    }
+};
+
+SPARSE_TABLE
+template <typename T>
+class SPT {
+private:
+	vector<vector<T>> table;
+	int n;
+	function<T(T, T)> operation;
+	T identity;
+
+public:
+	SPT(const vector<T>& arr, function<T(T, T)> op, T id) {
+		n = arr.size();
+		operation = op;
+		identity = id;
+
+		int logn = __bit_width(n) - 1;
+		table.assign(logn + 1, vector<T>(n, identity));
+
+		for (int i = 0; i < n; ++i) {
+			table[0][i] = arr[i];
+		}
+
+		for (int k = 1; (1 << k) <= n; ++k) {
+			for (int i = 0; i + (1 << k) - 1 < n; ++i) {
+				table[k][i] = operation(table[k - 1][i], table[k - 1][i + (1 << (k - 1))]);
+			}
+		}
+	}
+
+	T query(int l, int r, bool f = false) {
+		if (f == false) {
+			T result = identity;
+			for (int k = __bit_width(r - l + 1) - 1; k >= 0; --k) {
+				if ((1 << k) <= r - l + 1) {
+					result = operation(result, table[k][l]);
+					l += (1 << k);
+				}
+			}
+			return result;
+		}
+		int len = r - l + 1;
+		int k = __bit_width(len) - 1;
+		return operation(table[k][l], table[k][r - (1 << k) + 1]);
+	}
+};
+constexpr int N = 1E7;
+vector<int>spf(N);
+void cal() {
+	for (int i = 1; i < N; ++i) {
+		spf[i] = i;
+	}
+	for (int i = 2; i < N; i++) {
+		if (spf[i] == i) {
+			for (int j = i; j < N; j += i) {
+				spf[j] = min(spf[j], i);
+			}
+		}
+	}
+}
+
+POLLLARDS_RHO
+using ll = long long;
+// this will work when the key is an int or long long int
+struct custom_hash {
+	static uint64_t splitmix64(uint64_t x) {
+		x += 0x9e3779b97f4a7c15;
+		x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
+		x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
+		return x ^ (x >> 31);
+	}
+
+	size_t operator()(uint64_t x) const {
+		static const uint64_t FIXED_RANDOM = chrono::steady_clock::now().time_since_epoch().count();
+		return splitmix64(x + FIXED_RANDOM);
+	}
+};
+ll gcd(ll a, ll b) {
+	if (b == 0) return a;
+	return gcd(b, a % b);
+}
+
+ll mulmod(ll a, ll b, ll mod) {
+	ll result = 0;
+	a %= mod;
+	while (b > 0) {
+		if (b % 2 == 1) {
+			result = (result + a) % mod;
+		}
+		a = (a * 2) % mod;
+		b /= 2;
+	}
+	return result;
+}
+
+ll f(ll x, ll c, ll mod) {
+	return (mulmod(x, x, mod) + c) % mod;
+}
+
+ll pollards_rho(ll n) {
+	if (n % 2 == 0) return 2;
+	ll x = 2, y = 2, c = rand() % (n - 1) + 1;
+	ll d = 1;
+	while (d == 1) {
+		x = f(x, c, n);
+		y = f(f(y, c, n), c, n);
+		d = gcd(abs(x - y), n);
+	}
+	return d;
+}
+
+bool isPrime(ll n) {
+	if (n <= 1) return false;
+	if (n == 2 || n == 3) return true;
+	if (n % 2 == 0 || n % 3 == 0) return false;
+	for (ll i = 5; i * i <= n; i += 6) {
+		if (n % i == 0 || n % (i + 2) == 0) return false;
+	}
+	return true;
+}
+void factorize(ll n, std::unordered_map<ll, int, custom_hash>& factors) {
+	if (n == 1) return;
+	if (n <= 1e6) {
+		for (ll i = 2; i * i <= n; i++) {
+			while (n % i == 0) {
+				factors[i]++;
+				n /= i;
+			}
+		}
+		if (n > 1) factors[n]++;
+		return;
+	}
+	if (isPrime(n)) {
+		factors[n]++;
+		return;
+	}
+	ll divisor = pollards_rho(n);
+	factorize(divisor, factors);
+	factorize(n / divisor, factors);
+}
+
+Nth Permutation
+template <typename T>
+vector<T> nthPermutation(vector<T>&v, int k) {
+	vector<T>nums(v.begin(), v.end());
+	int n = nums.size();
+	vector<T> result;
+
+	int64_t fact = 1;
+	for (int i = 1; i <= n; ++i) {
+		fact *= i;
+	}
+
+	for (int i = 0; i < n; ++i) {
+		fact /= (n - i);
+		int idx = (k - 1) / fact;
+		result.push_back(nums[idx]);
+		nums.erase(nums.begin() + idx);
+		k -= idx * fact;
+	}
+
+	return result;
+}
+
+MONO_STACK
+std::vector<int> nextGreaterElements(const std::vector<int>& nums) {
+    int n = nums.size();
+    std::vector<int> result(n, -1);
+    std::stack<int> s;
+
+    for (int i = 0; i < n; ++i) {
+        while (!s.empty() && nums[s.top()] < nums[i]) {
+            result[s.top()] = nums[i];
+            s.pop();
+        }
+        s.push(i);
+    }
+
+    return result;
+}
+MOBIUS
+const int N = 1E6 + 5;
+int mob[N];
+void pre() {
+    mob[1] = 1;
+    for (int i = 1; i < N; ++i) {
+        for (int j = i + i; j < N; j += i) {
+            mob[j] -= mob[i];
+        }
+    }
+}
+vector<int> manacher_odd(string s) {
+	int n = s.size();
+	s = "\$" + s + "^";
+	vector<int> p(n + 2);
+	int l = 1, r = 1;
+	for (int i = 1; i <= n; i++) {
+		p[i] = max(0, min(r - i, p[l + (r - i)]));
+		while (s[i - p[i]] == s[i + p[i]]) {
+			p[i]++;
+		}
+		if (i + p[i] > r) {
+			l = i - p[i], r = i + p[i];
+		}
+	}
+	return vector<int>(begin(p) + 1, end(p) - 1);
+}
+vector<int> manacher(string s) {
+	string t;
+	for (auto c : s) {
+		t += string("#") + c;
+	}
+	auto res = manacher_odd(t + "#");
+	return vector<int>(begin(res) + 1, end(res) - 1);
+}
+template<typename T, typename T_iterable>
+vector<pair<T, int>> run_length_encoding(const T_iterable &items) {
+	vector<pair<T, int>> runs;
+	T previous;
+	int count = 0;
+
+	for (const T &item : items)
+		if (item == previous) {
+			count++;
+		} else {
+			if (count > 0)
+				runs.emplace_back(previous, count);
+
+			previous = item;
+			count = 1;
+		}
+
+	if (count > 0)
+		runs.emplace_back(previous, count);
+
+	return runs;
+}
+
+KMP
+vector<int>getLPS(const string pattern) {
+	int n = int(pattern.size());
+	vector<int>lps(n, 0);
+	int i = 1;
+	int j = 0;
+	while (i < n) {
+		if (pattern[i] == pattern[j]) {
+			lps[i++] = j + 1; j++;
+		} else {
+			if (j != 0) {
+				j = lps[j - 1];
+			} else {
+				lps[i] = 0;
+				i++;
+			}
+		}
+	}
+	return lps;
+}
+bool KMP(const string text, const string pattern) {
+	int t_len = int(text.size());
+	int pat_len = int(pattern.size());
+	int i = 0 , j = 0 ;
+	vector<int>lps = getLPS(pattern);
+	while (i < t_len && j < pat_len) {
+		if (text[i] == pattern[j]) {
+			i++, j++;
+		} else {
+			if (j != 0) {
+				j = lps[j - 1];
+			} else {
+				i++;
+			}
+		}
+	}
+	return j == pat_len;
+}
+
+Ith number in a sequence
+int64_t ith_num_in_a_seq(int64_t i){
+    int64_t ans = 0;
+    int64_t a = 1;
+    int64_t digit[] = {0, 1, 2, 3, 5, 6, 7, 8, 9};
+    while (i){
+        //ith % total digit
+        ans += digit[i % 9] * a;
+        i /= 9;
+        //mult by 10 everytime
+        a *= 10;
+        //i divide number of digit
+    }
+    return ans;
+}
+__int128 read() {
+	__int128 x = 0, f = 1;
+	char ch = getchar();
+	while (ch < '0' || ch > '9') {
+		if (ch == '-') f = -1;
+		ch = getchar();
+	}
+	while (ch >= '0' && ch <= '9') {
+		x = x * 10 + ch - '0';
+		ch = getchar();
+	}
+	return x * f;
+}
+void print(__int128 x) {
+	if (x < 0) {
+		putchar('-');
+		x = -x;
+	}
+	if (x > 9) print(x / 10);
+	putchar(x % 10 + '0');
+}
+
+FENWICK_TREE (1 based)
+struct F {
+	vector<int> bit;
+	int n;
+
+	F(int n) : n(n) {
+		bit.assign(n + 1, 0);
+	}
+
+	void update(int idx, int delta) {
+		for (; idx <= n; idx += idx & -idx)
+			bit[idx] += delta;
+	}
+
+	int query(int idx) {
+		int sum = 0;
+		for (; idx > 0; idx -= idx & -idx)
+			sum += bit[idx];
+		return sum;
+	}
+};
+
+PHI
+int64_t phi(int n) {
+	int64_t result = n;
+	for (int i = 2; 1LL * i * i <= n; i++) {
+		if (n % i == 0) {
+			while (n % i == 0)
+				n /= i;
+			result -= result / i;
+		}
+	}
+	if (n > 1)
+		result -= result / n;
+		
+	return result;
+}
+
+Edit Distance
+constexpr int INF = int(1E9) + 5;
+int edit_distance(const string &S, const string &T) {
+     int n = int(S.size());
+     int m = int(T.size());
+     vector<int> dp(m + 1);
+     iota(dp.begin(), dp.end(), 0);
+
+     for (int i = 0; i < n; i++) {
+          vector<int> ndp(m + 1, INF);
+          ndp[0] = i + 1;
+
+          for (int j = 0; j < m; j++)
+               ndp[j + 1] = min({ndp[j] + 1, dp[j + 1] + 1, dp[j] + (S[i] != T[j])});
+
+          dp.swap(ndp);
+     }
+
+     return dp[m];
+}
+struct ch {
+	const uint64_t C = uint64_t(2e18 * acos(0)) + 71;
+	const uint32_t RANDOM = chrono::steady_clock::now().time_since_epoch().count();
+	size_t operator()(uint64_t x) const {
+		return __builtin_bswap64((x ^ RANDOM) * C);
+	}
+};
+
+LCS
+string c_lcs(const string &s1, const string &s2) {
+    int n = s1.size();
+    int m = s2.size();
+    int dp[n + 1][m + 1];
+    memset(dp, 0, sizeof(dp));
+    for (int i = 1; i <= n; ++i)
+        for (int j = 1; j <= m; ++j)
+            if (s1[i - 1] == s2[j - 1])
+                dp[i][j] = 1 + dp[i - 1][j - 1];
+            else
+                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
+
+    string con;
+    while (n > 0 && m > 0) {
+        if (s1[n - 1] == s2[m - 1]) {
+            con.push_back(s1[n - 1]);
+            n--, m--;
+        } else if (dp[n - 1][m] > dp[n][m - 1]) {
+            n--;
+        } else {
+            m--;
+        }
+    }
+    return string(con.rbegin(), con.rend());
+}
+
+Combinatorics
+struct Combinatorics {
+    int maxN;
+    vector<long long> fact, invFact;
+
+    Combinatorics(int n) {
+        maxN = n;
+        fact.resize(maxN + 1);
+        invFact.resize(maxN + 1);
+        fact[0] = 1;
+
+        for (int i = 1; i <= maxN; i++) {
+            fact[i] = (fact[i - 1] * i) % MOD;
+        }
+
+        invFact[maxN] = power(fact[maxN], MOD - 2);
+        for (int i = maxN - 1; i >= 0; i--) {
+            invFact[i] = (invFact[i + 1] * (i + 1)) % MOD;
+        }
+    }
+
+    long long power(long long x, int y) {
+        long long res = 1;
+        while (y > 0) {
+            if (y % 2 == 1) res = (res * x) % MOD;
+            x = (x * x) % MOD;
+            y /= 2;
+        }
+        return res;
+    }
+
+    long long nCr(int n, int r) {
+        if (r > n || r < 0) return 0;
+        return (fact[n] * invFact[r] % MOD * invFact[n - r] % MOD) % MOD;
+    }
+
+    long long nPr(int n, int r) {
+        if (r > n || r < 0) return 0;
+        return (fact[n] * invFact[n - r]) % MOD;
+    }
+};
+
+int64_t any_to_anybase( int64_t num , int64_t baseA , int64_t baseB){
+	int64_t ans = 0;
+	int64_t dec =  stoll(to_string(num), nullptr , baseA);
+	int64_t rem = 0;
+	int64_t i = 1;
+	while (dec){
+		rem = dec % baseB;
+		dec /= baseB;
+		ans += rem * i;
+		i*=10;
+	}
+	return ans;
+}
+
+AHO_CORASICK
+const int N = 1E6; // change
+const int K = 26;
+
+struct AhoCorasick {
+	struct ver {
+		int nxt[K];
+		ver() {
+			fill(begin(nxt), end(nxt), 0);
+		}
+	};
+
+	vector<ver> trie;
+	vector<int> slnk, dp, end_at;
+
+	AhoCorasick() : slnk(N), dp(N), end_at(N) {
+		trie.emplace_back(); // Initialize root node
+	}
+
+	void add(string &s, int i) {
+		int v = 0;
+		for (char ch : s) {
+			int c = ch - 'a';
+			if (trie[v].nxt[c] == 0) {
+				trie[v].nxt[c] = trie.size();
+				trie.emplace_back();
+			}
+			v = trie[v].nxt[c];
+		}
+		end_at[i] = v;
+	}
+
+	void build() {
+		queue<int> q;
+		q.push(0);
+		while (!q.empty()) {
+			int u = q.front(); q.pop();
+			for (int c = 0; c < K; ++c) {
+				int v = trie[u].nxt[c];
+				if (v == 0) continue;  // No node
+
+				q.push(v);
+				if (u == 0) continue;  // Root node
+
+				int cur = slnk[u];
+				while (cur && trie[cur].nxt[c] == 0) cur = slnk[cur];
+				slnk[v] = trie[cur].nxt[c];
+			}
+		}
+	}
+
+	void trav(string &text) {
+		int u = 0;
+		for (char c : text) {
+			c -= 'a';
+			while (u && trie[u].nxt[c] == 0) u = slnk[u];
+			u = trie[u].nxt[c];
+			dp[u]++;
+		}
+	}
+
+	void clear() {
+		fill(begin(dp), begin(dp) + trie.size(), 0);
+		fill(begin(slnk), begin(slnk) + trie.size(), 0);
+		fill(begin(end_at), begin(end_at) + trie.size(), 0);
+		trie.clear();
+		trie.emplace_back();
+	}
+};
+
+NOTES 
+#pragma GCC target("bmi,bmi2,lzcnt,popcnt")
+//__builtin_popcount(x): Counts the number of one’s(set bits) in an integer
+//__builtin_parity(x): Returns true(1)(odd number of set bits) false(0)(even number of set bits)
+//__builtin_clz(x): cnt leading zeros
+//__builtin_ctz(x): Cnt trailing zeros
+// __builtin_ffs(x) (Find First Setbit index + 1) from right
+// __lg(x) (index of highest setbit) msb
+nod *= (e + 1);
+mt19937 rng(chrono::high_resolution_clock::now().time_since_epoch().count());
+#undef _GLIBCXX_HAVE_ICONV
+#include <bits/extc++.h>
+template<class T>
+using o_set = __gnu_pbds::tree<T, __gnu_pbds::null_type, less_equal<T>, __gnu_pbds::rb_tree_tag, __gnu_pbds::tree_order_statistics_node_update>;
+pw *= i; // p^e+1
+sod *= (pw - 1) / (i - 1); //(p^e+1)-1 / p-1
+Bézout's identity — Let a and b be integers with greatest common divisor d. Then there exist integers x and y such that ax + by = d. Moreover, the integers of the form az + bt are exactly the multiples of d.
+Prime gap between two prime number is very small in real life
+Divisibility rule for 3 states that a number is completely divisible by 3 if the sum of its digits is divisible by 3.
+If the last two digits of a number are divisible by 4
+which last with digits, 0 or 5 are always divisible by 5.
+Numbers which are divisible by both 2 and 3 are divisible by 6
+Example: Is 1073 divisible by 7?
+From the rule stated remove 3 from the number and double it, which becomes 6.
+Remaining number becomes 107, so 107-6 = 101.
+Repeating the process one more time, we have 1 x 2 = 2.
+Remaining number 10 – 2 = 8.
+As 8 is not divisible by 7, hence the number 1073 is not divisible by 7.
+If the last three digits of a number are divisible by 8
+The rule for divisibility by 9 is similar to divisibility rule for 3
+If the difference of the sum of alternative digits of a number is divisible by 11
+For example: 2795 → 279 + (5 x 4) 
+→ 279 + (20) 
+→ 299 
+→ 29 + (9 x 4) 
+→ 29 + 36 
+→65 (until 2 dig number)
+for (int i = 5; n / i >= 1; i *= 5) count += n / i;(trailing zero)
+Every even integer greater than 2 can be expressed as the sum of two primes.
+Theorem: For any pair of positive integers N and K, the number of K-tuples of non-negative integers whose sum is N is equal to the binomial coefficient (N+K−1N) or (N+K−1K−1).
+Sn​=n / 2 * d * (n−1) (d=common difference)
+Sn​=a * (1−r) / (1−r ^ n) ​(r!=1)
+
+Phi Using Seive Variation in Range 1 to N
+void phi_1_to_n(int n) {  //nlogn
+    vector<int> phi(n + 1);
+    phi[0] = 0; phi[1] = 1;
+    for (int i = 2; i <= n; i++)
+        phi[i] = i - 1;
+    for (int i = 2; i <= n; i++)
+        for (int j = 2 * i; j <= n; j += i)
+            phi[j] -= phi[i];
+}
+
+Maximum Subarray size thats sum = K
+int n, k; cin >> n >> k;
+    int total_sum = 0;
+    vector < int > pre(n + 7, 0);
+    for (int i = 1; i <= n; i++) {
+        int temp; cin >> temp;
+        total_sum += temp;
+        if (i == 1) pre[i] = temp;
+        else pre[i] = pre[i - 1] + temp;
+    }
+    if (total_sum < k) { cout << "-1" << endl; return; }
+    if (total_sum == k) { cout << "0" << endl; return; }
+    int maximum_subSize = 0;
+    gp_hash_table < int, int, customHash> table;
+    for (int i = 1; i <= n; i++) {
+        if (pre[i] >= k) {
+            int subSUM = pre[i] - k;
+            if (subSUM == 0) maximum_subSize = max(maximum_subSize, i);
+            else if (table[subSUM]) {
+                int left = table[subSUM];
+                int right = i;
+                int subSize = right - left;
+                maximum_subSize = max(subSize, maximum_subSize);
+            }
+        }
+        if (!table[pre[i]]) table[pre[i]] = i;
+    }
+    cout << maximum_subSize << endl;
+
+
+Geometric Sum
+int MOD = 1e9 + 7;
+int BigMod(int b, int p) {
+    int x = 1;
+    while (p) {
+        if (p & 1) x = (x * b) % MOD;
+        b = (b * b) % MOD;
+        p >>= 1;
+    } return x;
+}
+
+int geometric_Sum() {
+    int a, r, n; cin >> a >> r >> n; //a = first value r = ratio, n = n-term
+    int res = BigMod(r, n);
+    int numerator = (a * (1 - res)) % MOD;
+    numerator = (numerator + MOD) % MOD;
+    int denominator = ((1 - r) % MOD + MOD) % MOD;
+    int ans = (numerator * BigMod(denominator, MOD - 2)) % MOD;
+    return ans;
+}
+
+Extended Euclidean Algorithm (GCD)
+int egcd(int a, int b, int &x, int &y) {
+    if (b == 0) {
+        x = 1;
+        y = 0;
+        return a;
+    }
+    int x1, y1;
+    int d = egcd(b, a % b, x1, y1);
+    x = y1; y = x1 - y1 * (a / b);
+    return d;
+}
+
+Matrix Exponentiation (n-th Term)
+const int mod = 1e9 + 7;
+
+struct Mat {
+    int sz;
+    vector<vector<int>> mat;
+    Mat(int sz) {
+        this->sz = sz;
+        mat.resize(sz, vector<int>(sz, 0));
+    }
+    void identity_matrix(bool flag = 0) {
+        for (int i = 0; i < (flag ? sz - 1 : sz); i++) {
+            if (!flag) mat[i][i] = 1;
+            else mat[i][i + 1] = 1;
+        }
+    }
+    Mat operator* (Mat a) {
+        Mat res(sz);
+        for (int i = 0; i < sz; i++) {
+            for (int j = 0; j < sz; j++) {
+                for (int k = 0; k < sz; k++) {
+                    res.mat[i][j] = (res.mat[i][j] + mat[i][k] * 1LL * a.mat[k][j]) % mod;
+                }
+            }
+        }
+        return res;
+    }
+};
+
+Mat matExpo(Mat a, int n) {
+    Mat res(a.sz);
+    res.identity_matrix();
+    while (n) {
+        if (n & 1) res = res * a;
+        a = a * a;
+        n >>= 1;
+    }
+    return res;
+}
+
+int nth_term(int nth, int known_term, vector<int> &base_mat, vector<int> &coefficient_mat) {
+    Mat T(known_term);
+    for (int i = 0; i < known_term; i++) T.mat[i][0] = coefficient_mat[i];
+    T.identity_matrix(1);
+    if (nth <= known_term) return base_mat[nth - 1];
+    T = matExpo(T, nth - known_term);
+    int ans = 0;
+    for (int i = 0, j = known_term - 1; i < known_term; i++, j--) {
+        ans = (ans + 1LL * base_mat[j] * T.mat[i][0]) % mod;
+    }
+    return ans;
+}
+
+Print LIS (Binary Search)
+int n; cin >> n;
+    vector<int> a(n), parent(n, -1), ind(n);
+    vector<int> lis;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        int it = lower_bound(lis.begin(), lis.end(), a[i]) - lis.begin();
+        if (it == lis.size()) {
+            lis.push_back(a[i]);
+            ind[lis.size() - 1] = i;
+            parent[i] = (lis.size() == 1 ? -1 : ind[it - 1]);
+        }
+        else {
+            lis[it] = a[i];
+            ind[it] = i;
+            parent[i] = (it == 0 ? -1 : ind[it - 1]);
+        }
+    }
+
+    deque<int> LIS;
+    LIS.push_front(lis.back());
+    auto it = ind[lis.size() - 1];
+    while (parent[it] != -1) {
+        it = parent[it];
+        LIS.push_front(a[it]);
+    }
+    for (auto x : LIS) cout << x << ' ';
+    cout << '\n';
+}
+
+Suffix Array Algorithm
+array<vector<int>, 2> get_sa(string& s, int lim = 128) { // for integer, just change string to vector<int> and minimum value of vector must be >= 1
+    int n = s.size() + 1, k = 0, a, b;
+    vector<int> x(begin(s), end(s) + 1), y(n), sa(n), lcp(n), ws(max(n, lim)), rank(n);
+    x.back() = 0;
+    iota(begin(sa), end(sa), 0);
+    for (int j = 0, p = 0; p < n; j = max(1LL, j * 2), lim = p) {
+        p = j, iota(begin(y), end(y), n - j);
+        for (int i = 0; i < n; ++i) if (sa[i] >= j) y[p++] = sa[i] - j;
+        fill(begin(ws), end(ws), 0);
+        for (int i = 0; i < n; ++i) ws[x[i]]++;
+        for (int i = 1; i < lim; ++i) ws[i] += ws[i - 1];
+        for (int i = n; i--;) sa[--ws[x[y[i]]]] = y[i];
+        swap(x, y), p = 1, x[sa[0]] = 0;
+        for (int i = 1; i < n; ++i) a = sa[i - 1], b = sa[i], x[b] =
+                                                (y[a] == y[b] && y[a + j] == y[b + j]) ? p - 1 : p++;
+    }
+    for (int i = 1; i < n; ++i) rank[sa[i]] = i;
+    for (int i = 0, j; i < n - 1; lcp[rank[i++]] = k)
+        for (k && k--, j = sa[rank[i] - 1]; s[i + k] == s[j + k]; k++);
+    sa.erase(sa.begin()), lcp.erase(lcp.begin());
+    return {sa, lcp};
+}
+
+// Function Calling : auto [sa,lcp] = get_sa(s);
+// sa -> suffix array; lcp = longest common prefix
+
+Point Location on a Polygon (Ray Casting)
+struct point {
+    long long x, y;
+    void read() {
+        cin >> x >> y;
+    }
+    point operator - (const point& b) const {
+        return {x - b.x, y - b.y};
+    }
+    point operator -= (const point& b) const {
+        return {x - b.x, y - b.y};
+    }
+    long long operator * (const point& b) const {
+        return 1LL * x * b.y - 1LL * y * b.x;
+    }
+    long long triangle(const point& b, const point& c) const {
+        return (b - *this) * (c - *this);
+    }
+};
+ 
+bool is_intersect(point p1, point p2, point p3, point p4) {
+    if ((p2 - p1) * (p4 - p3) == 0) {
+        if (p1.triangle(p2, p3) != 0) return false;
+        for (int i = 0; i < 2; i++) {
+            if (max(p1.x, p2.x) < min(p3.x, p4.x) || max(p1.y, p2.y) < min(p3.y, p4.y)) return false;
+            swap(p1, p3); swap(p2, p4);
+        }
+        return true;
+    }
+    for (int i = 0; i < 2; i++) {
+        long long sign1 = (p2 - p1) * (p3 - p1);
+        long long sign2 = (p2 - p1) * (p4 - p1);
+        if ((sign1 < 0 and sign2 < 0) || (sign1 > 0 and sign2 > 0)) return false;
+        swap(p1, p3); swap(p2, p4);
+    }
+    return true;
+}
+ 
+bool is_on_segment(point &p1, point &p2, point &p3) {
+    if (p1.triangle(p2, p3) != 0) return false;
+    return (min(p1.x, p2.x) <= p3.x and p3.x <= max(p1.x, p2.x) and min(p1.y, p2.y) <= p3.y and p3.y <= max(p1.y, p2.y));
+}
+ 
+void solve() {
+    int n, m; cin >> n >> m;
+    point p[n];
+    for (int i = 0; i < n; i++) p[i].read();
+    for (int i = 0; i < m; i++) {
+        point px; px.read();
+        point ray = {px.x + 1, 1000000001};
+        int cnt = 0;
+        bool is_on_boundary = false;
+        for (int j = 0; j < n; j++) {
+            int i = (j == n - 1 ? 0 : j + 1);
+            if (is_on_segment(p[i], p[j], px)) {
+                is_on_boundary = true;
+                break;
+            }
+            if (is_intersect(px, ray, p[i], p[j])) cnt++;
+        }
+        if (is_on_boundary) cout << "BOUNDARY\n";
+        else if (cnt & 1) cout << "INSIDE\n";
+        else cout << "OUTSIDE\n";
+    }
+}
+
+Convex Hull
+void solve() {
+	int n; cin >> n;
+	point p[n];
+	for (int i = 0; i < n; i++) p[i].read();
+	sort(p, p + n);
+	vector<point> convex_hull;
+	for (int i = 0; i < 2; i++) {
+		int sz = convex_hull.size();
+		for (auto C : p) {
+			while ((int)convex_hull.size() - sz >= 2) {
+				point A = convex_hull.end()[-2];
+				point B = convex_hull.end()[-1];
+				if (A.triangle(B, C) <= 0) break;
+				convex_hull.pop_back();
+			}
+			convex_hull.push_back(C);
+		}
+		convex_hull.pop_back();
+		reverse(p, p + n);
+	}
+	cout << convex_hull.size() << '\n';
+	for (auto x : convex_hull) cout << x.x << ' ' << x.y << '\n';
+}
+
+Formula (GEO):
+Slope : (x2-x1) * (y-y1) - (x-x1) * (y2-y1)
+Parallel: (p2 - p1) * (p4 - p3) = 0
+(Slope > 0) => CounterClockWise Rotation
+(Slope < 0) => ClockWise Rotation
+(Slope = 0) => Collinear p1.triangle(p2, p3) = 0
+Area of a polygon : sign area of triangle from (0,0) [clockwise +, - otherwise]
+
+Lattice point: Interior = (2 * area - boundary + 2)/2 
+point pp = p[j] - p[i]; // adj point diff
+boundary += gcd(abs(pp.x), abs(pp.y)); // for all edge
+
+Area of a triangle : x1 (y2-y1) + x2 (y3-y1) + x3 (y1-y2)   // Using Determinants (Matrix)
+x1*y2 - y1*x2
+Equation of a line from two point ax+by=c , where
+a  = y2 - y1;     b  = x1 - x2;      c = ax1 + by1
+
+Check if the line intersects a circle if(ans <= radius)
+(abs(a*x + b*y + c)/sqrt(a*a+b*b))
+
+Area of a regular hexagon A = (3*sqrt(3)*a*a)/2;
+
+Number of intersecting points made by the diagonals of a n-gon : (n*(n-1)*(n-2)*(n-3))/24   or  nC4
+
+Number of Diagonals of any n-gon : nC2-n 
+Another Equation : (n * (n-3))/2
+nCr = n-1Cr-1  + n-1Cr
+Multiplication of first n odd numbers : 2n! / (2n * n!)
+Summation of first n odd numbers : n2
+Summation of first n even numbers : n(n+1)
+
+No of Distinct Subsequences
+int distinctSubsequences(string &str, string &sub) {
+	int n = str.size();
+	int m = sub.size();
+	vector<int> prev(m + 1, 0);
+	prev[0] = 1;
+	for (int i = 1; i <= n; i++) {
+		for (int j = m; j >= 0; j--) {
+			if (str[i - 1] == sub[j - 1]) prev[j] = prev[j - 1] + prev[j];
+		}
+	}
+	return prev[m];
+}
+
+Print Shortest Supersequence
+string shortestSupersequence(string text1, string text2) {
+	int n = text1.size();
+	int m = text2.size();
+	vector<vector<int>> dp(n + 1, vector<int> (m + 1, 0));
+	for (int i = 1; i <= n; i++) {
+		for (int j = 1; j <= m; j++) {
+			if (text1[i - 1] == text2[j - 1]) dp[i][j] = 1 + dp[i - 1][j - 1];
+			else dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
+		}
+	}
+	int index = (n + m) - dp[n][m];
+	string lcs(index, '.');
+	int i = n, j = m;
+	index--;
+	while (i > 0 && j > 0) {
+		if (text1[i - 1] == text2[j - 1]) {
+			lcs[index] = text1[i - 1];
+			index--;
+			i--; j--;
+		}
+		else if (dp[i][j - 1] > dp[i - 1][j]) {
+			lcs[index] = text2[j - 1];
+			index--;
+			j--;
+		}
+		else {
+			lcs[index] = text1[i - 1];
+			index--;
+			i--;
+		}
+	}
+	while (i > 0) lcs[index] = text1[i - 1], index--, i--;
+	while (j > 0) lcs[index] = text2[j - 1], index--, j--;
+	return lcs;
+}
+
+
+MO’s Algorithm (No of Distinct Elements in range L,R)
+const int N = 1e6 + 5;
+int rootN, freq[N];
+struct Query {
+    int l, r, ind;
+};
+
+bool cmp(Query Q1, Query Q2) {
+    if (Q1.l / rootN == Q2.l / rootN) return Q1.r > Q2.r;
+    return Q1.l / rootN < Q2.l / rootN;
+}
+
+void solve() {
+    int n; cin >> n;
+    int a[n];
+    for (int i = 0; i < n; i++) cin >> a[i];
+
+    rootN = sqrtl(n);
+    int q; cin >> q;
+    Query Q[q];
+
+    for (int i = 0; i < q; i++) {
+        int l, r; cin >> l >> r;
+        Q[i].l = l - 1;
+        Q[i].r = r - 1;
+        Q[i].ind = i;
+    }
+
+    sort(Q, Q + q, cmp);
+    int ans[q];
+    int cur_l = 0, cur_r = -1, cur_ans = 0;
+
+    for (int i = 0; i < q; i++) {
+        int l = Q[i].l;
+        int r = Q[i].r;
+        while (cur_r < r) {
+            ++cur_r;
+            freq[a[cur_r]]++;
+            if (freq[a[cur_r]] == 1) cur_ans++;
+        }
+        while (cur_l > l) {
+            --cur_l;
+            freq[a[cur_l]]++;
+            if (freq[a[cur_l]] == 1) cur_ans++;
+        }
+        while (cur_l < l) {
+            freq[a[cur_l]]--;
+            if (freq[a[cur_l]] == 0) cur_ans--;
+            cur_l++;
+        }
+        while (cur_r > r) {
+            freq[a[cur_r]]--;
+            if (freq[a[cur_r]] == 0) cur_ans--;
+            cur_r--;
+        }
+        ans[Q[i].ind] = cur_ans;
+    }
+
+    for (int i = 0; i < q; i++) {
+        cout << ans[i] << '\n';
+    }
+}
+}
+suffix_automaton
+
+struct State {
+	int length, link;
+	std::map<char, int> transitions;
+	int cnt; // For counting occurrences
+	long long num_substrings; // Number of unique substrings from this state
+};
+
+class SuffixAutomaton {
+public:
+	std::vector<State> states;
+	int last;
+
+	SuffixAutomaton(const std::string &s) {
+		states.push_back({0, -1});
+		last = 0;
+		for (char c : s) add_char(c);
+		count_substrings(0);
+	}
+
+	void add_char(char c) {
+		int cur = states.size();
+		states.push_back({states[last].length + 1, 0, {}, 1});
+		int p = last;
+		while (p != -1 && !states[p].transitions.count(c)) {
+			states[p].transitions[c] = cur;
+			p = states[p].link;
+		}
+		if (p == -1) {
+			states[cur].link = 0;
+		} else {
+			int q = states[p].transitions[c];
+			if (states[p].length + 1 == states[q].length) {
+				states[cur].link = q;
+			} else {
+				int clone = states.size();
+				states.push_back({states[p].length + 1, states[q].link, states[q].transitions, 0});
+				while (p != -1 && states[p].transitions[c] == q) {
+					states[p].transitions[c] = clone;
+					p = states[p].link;
+				}
+				states[q].link = states[cur].link = clone;
+			}
+		}
+		last = cur;
+	}
+	bool contains(const std::string &substr) {
+		int current = 0;
+		for (char c : substr) {
+			if (!states[current].transitions.count(c)) return false;
+			current = states[current].transitions[c];
+		}
+		return true;
+	}
+
+	void build() {
+		int sz = states.size();
+		std::vector<int> indegree(sz, 0);
+		for (int i = 0; i < sz; ++i) {
+			if (states[i].link != -1) indegree[states[i].link]++;
+		}
+		std::queue<int> q;
+		for (int i = 0; i < sz; ++i) {
+			if (indegree[i] == 0) q.push(i);
+		}
+		while (!q.empty()) {
+			int cur = q.front();
+			q.pop();
+			if (states[cur].link != -1) {
+				states[states[cur].link].cnt += states[cur].cnt;
+				if (--indegree[states[cur].link] == 0) {
+					q.push(states[cur].link);
+				}
+			}
+		}
+	}
+	// Count the number of unique substrings from a given state
+	long long count_substrings(int state) {
+		if (states[state].num_substrings != 0) return states[state].num_substrings;
+		long long cnt = 1;
+		for (auto &[c, next_state] : states[state].transitions) {
+			cnt += count_substrings(next_state);
+		}
+		return states[state].num_substrings = cnt;
+	}
+	// Count occurrences of a specific substring in the original string
+	// Ensure `build` is called before this function to propagate `cnt` values
+	int count_occurrences(const std::string &substr) {
+		int current = 0;
+		for (char c : substr) {
+			if (!states[current].transitions.count(c)) return 0;
+			current = states[current].transitions[c];
+		}
+		return states[current].cnt;
+	}
+	// Find the k-th lexicographical substring
+	std::string kth_substring(int k) {
+		int current = 0;
+		std::string result;
+		while (k > 0) {
+			for (auto &[c, next_state] : states[current].transitions) {
+				int num = states[next_state].num_substrings;
+				if (k > num) {
+					k -= num;
+				} else {
+					result += c;
+					current = next_state;
+					k--;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
+	int longest_common_substring(const std::string &t) {
+		int current = 0, length = 0, best = 0;
+		for (char c : t) {
+			while (current != -1 && !states[current].transitions.count(c)) {
+				current = states[current].link;
+				length = current == -1 ? 0 : states[current].length;
+			}
+			if (current != -1) {
+				current = states[current].transitions[c];
+				length++;
+				best = std::max(best, length);
+			}
+		}
+		return best;
+	}
+	// Count the number of distinct substrings in the original string
+	long long count_distinct_substrings() {
+		long long total = 0;
+		for (const auto &state : states) {
+			total += state.length - (state.link == -1 ? 0 : states[state.link].length);
+		}
+		return total;
+	}
+
+};
+
+Next Greater Element
+vector<int> NGE(vector<int> &v){
+    vector<int> nge(v.size());
+    stack<int> st;
+    for(int i=0; i<v.size(); i++){
+        while(!st.empty() && v[i]>v[st.top()]){
+            nge[st.top()] = i;
+            st.pop();
+        }
+        st.push(i);
+    }
+    while(!st.empty()){
+        nge[st.top()] = -1;
+        st.pop();
+    }
+    return nge;
+}
+vector<int> nge = NGE(v); // Main Function calling
+
+Graph Path
+vector<int> path(int vertex) {
+    deque<int> path;
+        while (vertex != -1) {
+            path.push_front(vertex);
+            vertex = parent[vertex]];
+        }
+    return path;
+}
